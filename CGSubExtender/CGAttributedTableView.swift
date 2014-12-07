@@ -698,7 +698,9 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
                     if let pData = placeholderData {
-                        del.attributedCell(self, updateIndexPath: indexPath, withData: pData[row])
+                        if pData.count > row {
+                            del.attributedCell(self, updateIndexPath: indexPath, withData: pData[row])
+                        }
                     }
                 }
             }
