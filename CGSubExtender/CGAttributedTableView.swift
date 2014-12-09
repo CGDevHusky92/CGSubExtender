@@ -18,14 +18,11 @@ import UIKit
 @objc public protocol CGAttributedTableViewDataSource {
     
     func numberOfSectionsInAttributedTableView(tableView: CGAttributedTableView) -> Int
-    optional func attributedTableView(tableView: CGAttributedTableView, titleForHeaderInSection section: Int) -> String?
     func attributedTableView(tableView: CGAttributedTableView, numberOfRowsInSection section: Int) -> Int
     
-    func attributedTableView(tableView: CGAttributedTableView, propertyForRowAtIndexPath indexPath: NSIndexPath) -> String
-    func attributedTableView(tableView: CGAttributedTableView, descriptionForRowAtIndexPath indexPath: NSIndexPath) -> String?
-    optional func attributedTableView(tableView: CGAttributedTableView, placeHolderForRowAtIndexPath indexPath: NSIndexPath) -> String?
-    optional func attributedTableView(tableView: CGAttributedTableView, placeHolderDataForRowAtIndexPath indexPath: NSIndexPath) -> [String]?
-    func attributedTableView(tableView: CGAttributedTableView, cellTypeForRowAtIndexPath indexPath: NSIndexPath) -> Int
+    func attributedTableView(tableView: CGAttributedTableView, cellDescriptionForRowAtIndexPath indexPath: NSIndexPath) -> CGAttributedTableViewCellDescription
+    
+    optional func attributedTableView(tableView: CGAttributedTableView, titleForHeaderInSection section: Int) -> String?
     
 }
 
@@ -88,6 +85,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     }
     
     public func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        
         var prop: String = ""
         var descTemp: String?
         var pHolderTemp: String?
@@ -95,11 +93,12 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
         var type: CGAttributedTableViewCellType = CGAttributedTableViewCellType.None
         
         if let dataSrc = attributedDataSource {
-            prop = dataSrc.attributedTableView(self, propertyForRowAtIndexPath: indexPath)
-            descTemp = dataSrc.attributedTableView(self, descriptionForRowAtIndexPath: indexPath)
-            pHolderTemp = dataSrc.attributedTableView?(self, placeHolderForRowAtIndexPath: indexPath)
-            pHolderDataTemp = dataSrc.attributedTableView?(self, placeHolderDataForRowAtIndexPath: indexPath)
-            type = CGAttributedTableViewCellType(rawValue: dataSrc.attributedTableView(self, cellTypeForRowAtIndexPath: indexPath))!
+            let cellDescription = dataSrc.attributedTableView(self, cellDescriptionForRowAtIndexPath: indexPath)
+            type = cellDescription.cellType
+            prop = cellDescription.property
+            descTemp = cellDescription.descriptionText
+            pHolderTemp = cellDescription.placeHolder
+            pHolderDataTemp = cellDescription.placeHolderData
         }
         
         let cell: CGAttributedTableViewCell = tableView.dequeueReusableCellWithIdentifier(type.simpleDescription(), forIndexPath: indexPath) as CGAttributedTableViewCell
@@ -135,6 +134,8 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                     cell.toggleEditingProperty()
                 }
             }
+        } else {
+            cell.descriptionText = prop
         }
         
         return cell
@@ -163,8 +164,15 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             }
         } else {
             let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
+            if let sCell = selectedCell {
+                sCell.resignAllFirstResponders()
+            }
+            
             if cell.reuseIdentifier == CGAttributedTableViewCellType.Button.simpleDescription() {
                 cell.toggleEditingProperty()
+            } else {
+                selectedCell = cell
+                cell.assignFirstResponder()
             }
         }
     }
@@ -187,10 +195,10 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     
     public func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         if let dataSrc = attributedDataSource {
-            let identifier = CGAttributedTableViewCellType(rawValue: dataSrc.attributedTableView(self, cellTypeForRowAtIndexPath: indexPath))!.simpleDescription()
-            if identifier == CGAttributedTableViewCellType.TextView.simpleDescription() {
+            let cellType = dataSrc.attributedTableView(self, cellDescriptionForRowAtIndexPath: indexPath).cellType
+            if cellType == CGAttributedTableViewCellType.TextView {
                 return 60.0
-            } else if identifier == CGAttributedTableViewCellType.Picker.simpleDescription() || identifier == CGAttributedTableViewCellType.DatePicker.simpleDescription() {
+            } else if cellType == CGAttributedTableViewCellType.Picker || cellType == CGAttributedTableViewCellType.DatePicker {
                 if _singleEditingMode {
                     if let sCell = selectedCell {
                         if sCell.editMode {
@@ -213,10 +221,10 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     
     public func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         if let dataSrc = attributedDataSource {
-            let identifier = CGAttributedTableViewCellType(rawValue: dataSrc.attributedTableView(self, cellTypeForRowAtIndexPath: indexPath))!.simpleDescription()
-            if identifier == CGAttributedTableViewCellType.TextView.simpleDescription() {
+            let cellType = dataSrc.attributedTableView(self, cellDescriptionForRowAtIndexPath: indexPath).cellType
+            if cellType == CGAttributedTableViewCellType.TextView {
                 return 60.0
-            } else if identifier == CGAttributedTableViewCellType.Picker.simpleDescription() || identifier == CGAttributedTableViewCellType.DatePicker.simpleDescription() {
+            } else if cellType == CGAttributedTableViewCellType.Picker || cellType == CGAttributedTableViewCellType.DatePicker {
                 if _singleEditingMode {
                     if let sCell = selectedCell {
                         if sCell.editMode {
@@ -295,6 +303,22 @@ public protocol CGAttributedTableViewCellDelegate {
 //    func attributedCell(tableViewCell: CGAttributedTableViewCell, placeHolderStringForIndexPath indexPath: NSIndexPath, andRow row: Int) -> String?
 //    
 //}
+
+@objc public class CGAttributedTableViewCellDescription {
+    public var cellType: CGAttributedTableViewCellType
+    public var property: String
+    public var descriptionText: String?
+    public var placeHolder: String?
+    public var placeHolderData: [String]?
+    
+    public init(type: CGAttributedTableViewCellType = .None, withProperty prop: String = "", andDescription desc: String? = nil, withPlaceHolder plHolder: String? = nil, andPlaceHolderData plData: [String]? = nil) {
+        cellType = type
+        property = prop
+        descriptionText = desc
+        placeHolder = plHolder
+        placeHolderData = plData
+    }
+}
 
 public class CGAttributedTableViewCell: UITableViewCell {
     
@@ -419,6 +443,8 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     func placeHolderDataSet() { }
     
+    func assignFirstResponder() { }
+    
     func resignAllFirstResponders() { }
 }
 
@@ -494,6 +520,10 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAut
         if let placeText = placeholderText {
             textField.placeholder = placeText
         }
+    }
+    
+    override func assignFirstResponder() {
+        textField.becomeFirstResponder()
     }
     
     override func resignAllFirstResponders() {
@@ -592,6 +622,10 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
     
     override func descriptionTextSet() {
         textView.text = descriptionText
+    }
+    
+    override func assignFirstResponder() {
+        textView.becomeFirstResponder()
     }
     
     override func toggleEditingProperty() {
@@ -699,6 +733,7 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
                 if let indexPath = indexPathTemp {
                     if let pData = placeholderData {
                         if pData.count > row {
+                            println(pData[row])
                             del.attributedCell(self, updateIndexPath: indexPath, withData: pData[row])
                         }
                     }
@@ -755,7 +790,9 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
             if let tView = tableView {
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
-                    del.attributedCell(self, updateIndexPath: indexPath, withData: picker.date)
+                    if let date = picker.date.stringFromDate() {
+                        del.attributedCell(self, updateIndexPath: indexPath, withData: date)
+                    }
                 }
             }
         }
