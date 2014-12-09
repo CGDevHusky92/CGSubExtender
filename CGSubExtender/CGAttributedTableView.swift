@@ -26,7 +26,7 @@ import UIKit
     
 }
 
-public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableViewDelegate, CGAttributedTableViewCellDelegate {
+public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableViewDelegate {
     
     public var attributedDelegate: CGAttributedTableViewDelegate?
     public var attributedDataSource: CGAttributedTableViewDataSource?
@@ -102,7 +102,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
         }
         
         let cell: CGAttributedTableViewCell = tableView.dequeueReusableCellWithIdentifier(type.simpleDescription(), forIndexPath: indexPath) as CGAttributedTableViewCell
-        cell.delegate = self
+        cell.delegate = attributedDelegate
         cell.tableView = self
         cell.keyboardType = type.keyboardType()
         
@@ -148,8 +148,8 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     
     public func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: false)
+        let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
         if _singleEditingMode {
-            let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
             if cell.editMode {
                 selectedCell = nil
                 selectedIndexPath = nil
@@ -163,18 +163,39 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                 cell.toggleEditingProperty()
             }
         } else {
-            let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
             if let sCell = selectedCell {
                 sCell.resignAllFirstResponders()
             }
             
             if cell.reuseIdentifier == CGAttributedTableViewCellType.Button.simpleDescription() {
+                selectedCell = nil
                 cell.toggleEditingProperty()
             } else {
                 selectedCell = cell
                 cell.assignFirstResponder()
             }
         }
+    }
+    
+    /* ScrollView Delegate */
+    
+    public func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        println("Begin Dragging")
+        if let sCell = selectedCell {
+            println("Selected Cells Exist Dragging")
+            
+            sCell.resignAllFirstResponders()
+            //            selectedCell = nil
+        }
+        
+        if self.becomeFirstResponder() {
+            println("Became first responder")
+        }
+        if self.resignFirstResponder() {
+            println("Resigned first responder")
+        }
+        
+        
     }
 
     /* CGAttributedTableViewCell Delegate */
@@ -203,16 +224,12 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                     if let sCell = selectedCell {
                         if sCell.editMode {
                             if let sIndexPath = selectedIndexPath {
-                                if indexPath == sIndexPath {
-                                    return 162.0
-                                }
+                                if indexPath == sIndexPath { return 162.0 }
                             }
                         }
                     }
                 } else {
-                    if _editingModeEnabled {
-                        return 162.0
-                    }
+                    if _editingModeEnabled { return 162.0 }
                 }
             }
         }
@@ -229,16 +246,12 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                     if let sCell = selectedCell {
                         if sCell.editMode {
                             if let sIndexPath = selectedIndexPath {
-                                if indexPath == sIndexPath {
-                                    return 162.0
-                                }
+                                if indexPath == sIndexPath { return 162.0 }
                             }
                         }
                     }
                 } else {
-                    if _editingModeEnabled {
-                        return 162.0
-                    }
+                    if _editingModeEnabled { return 162.0 }
                 }
             }
         }
@@ -291,19 +304,6 @@ public enum CGAttributedTableViewCellType: Int {
     }
 }
 
-public protocol CGAttributedTableViewCellDelegate {
-    
-    func attributedCell(tableViewCell: CGAttributedTableViewCell, updateIndexPath indexPath: NSIndexPath, withData data: AnyObject)
-    func attributedCell(tableViewCell: CGAttributedTableViewCell, buttonPressedAtIndexPath indexPath: NSIndexPath)
-    
-}
-
-//public protocol CGAttributedTableViewCellDataSource {
-//    
-//    func attributedCell(tableViewCell: CGAttributedTableViewCell, placeHolderStringForIndexPath indexPath: NSIndexPath, andRow row: Int) -> String?
-//    
-//}
-
 @objc public class CGAttributedTableViewCellDescription {
     public var cellType: CGAttributedTableViewCellType
     public var property: String
@@ -325,8 +325,8 @@ public class CGAttributedTableViewCell: UITableViewCell {
     var propertyLabel: UILabel!
     var descriptionLabel: UILabel!
     
-    var delegate: CGAttributedTableViewCellDelegate?
-    weak var tableView: UITableView?
+    var delegate: CGAttributedTableViewDelegate?
+    weak var tableView: CGAttributedTableView?
     
     var propertyText: String? {
         get {
@@ -495,7 +495,7 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAut
                     if let tView = tableView {
                         let indexPathTemp = tView.indexPathForCell(self)
                         if let indexPath = indexPathTemp {
-                            del.attributedCell(self, updateIndexPath: indexPath, withData: textField.text)
+                            del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
                             textField.text = ""
                         }
                     }
@@ -523,10 +523,14 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAut
     }
     
     override func assignFirstResponder() {
+        println("Assigning First Responder")
+        
         textField.becomeFirstResponder()
     }
     
     override func resignAllFirstResponders() {
+        println("Resigning First Responder")
+        
         textField.resignFirstResponder()
     }
     
@@ -538,7 +542,7 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAut
                 if let tView = tableView {
                     let indexPathTemp = tView.indexPathForCell(self)
                     if let indexPath = indexPathTemp {
-                        del.attributedCell(self, updateIndexPath: indexPath, withData: textField.text)
+                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
                     }
                 }
             }
@@ -577,7 +581,7 @@ public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldA
                 if let tView = tableView {
                     let indexPathTemp = tView.indexPathForCell(self)
                     if let indexPath = indexPathTemp {
-                        del.attributedCell(self, updateIndexPath: indexPath, withData: textField.text)
+                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
                     }
                 }
             }
@@ -628,6 +632,10 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
         textView.becomeFirstResponder()
     }
     
+    override func resignAllFirstResponders() {
+        textView.resignFirstResponder()
+    }
+    
     override func toggleEditingProperty() {
         textView.resignFirstResponder()
         super.toggleEditingProperty()
@@ -639,7 +647,7 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
                 if let tView = tableView {
                     let indexPathTemp = tView.indexPathForCell(self)
                     if let indexPath = indexPathTemp {
-                        del.attributedCell(self, updateIndexPath: indexPath, withData: textView.text)
+                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textView.text)
                     }
                 }
             }
@@ -651,7 +659,7 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
             if let tView = tableView {
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
-                    del.attributedCell(self, updateIndexPath: indexPath, withData: textView.text)
+                    del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textView.text)
                 }
             }
         }
@@ -734,7 +742,7 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
                     if let pData = placeholderData {
                         if pData.count > row {
                             println(pData[row])
-                            del.attributedCell(self, updateIndexPath: indexPath, withData: pData[row])
+                            del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: pData[row])
                         }
                     }
                 }
@@ -791,7 +799,7 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
                     if let date = picker.date.stringFromDate() {
-                        del.attributedCell(self, updateIndexPath: indexPath, withData: date)
+                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: date)
                     }
                 }
             }
@@ -862,7 +870,7 @@ public class CGSwitchTableViewCell: CGAttributedTableViewCell {
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
                     let positionString = switchControl.on ? "Yes" : "No"
-                    del.attributedCell(self, updateIndexPath: indexPath, withData: positionString)
+                    del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: positionString)
                 }
             }
         }
@@ -901,7 +909,7 @@ public class CGButtonTableViewCell: CGAttributedTableViewCell {
             if let tView = tableView {
                 let indexPathTemp = tView.indexPathForCell(self)
                 if let indexPath = indexPathTemp {
-                    del.attributedCell(self, buttonPressedAtIndexPath: indexPath)
+                    del.attributedTableView(tView, buttonPressedAtIndexPath: indexPath)
                 }
             }
         }
