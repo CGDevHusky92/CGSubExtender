@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MessageUI/MessageUI.h>
 
 //! Project version number for CGSubExtender.
 FOUNDATION_EXPORT double CGSubExtenderVersionNumber;
