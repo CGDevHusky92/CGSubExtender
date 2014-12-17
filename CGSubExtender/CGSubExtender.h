@@ -21,8 +21,4 @@ FOUNDATION_EXPORT const unsigned char CGSubExtenderVersionString[];
 #import <CGSubExtender/UIImage+ORIENT.h>
 #import <CGSubExtender/CGSearchDisplayController.h>
 
-//@class CGOpenCVMatrixTranslator;
-
 #import <CGSubExtender/CGOpenCVMatrixTranslator.h>
-
-//#import <GPUImage.h>
