@@ -18,11 +18,13 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     public var searchTableController: UITableViewController?
     public var tableView: UITableView!
     
+    var removableConstraints: [NSLayoutConstraint]?
+    
     public override func viewDidLoad() {
         super.viewDidLoad()
         
-//        UIDevice.currentDevice().generatesDeviceOrientationNotifications
-//        NSNotificationCenter.defaultCenter().addObserver(self, selector: "loadLayout", name: UIDeviceOrientationDidChangeNotification, object: nil)
+        UIDevice.currentDevice().generatesDeviceOrientationNotifications
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "loadLayout", name: UIDeviceOrientationDidChangeNotification, object: nil)
         
         tableView = UITableView()
         tableView.dataSource = self
@@ -30,6 +32,7 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
         tableView.setTranslatesAutoresizingMaskIntoConstraints(false)
         
         self.view.addSubview(tableView)
+        self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "tableView" : tableView ]))
         
         if let sTableController = searchTableController {
             sTableController.tableView.delegate = self
@@ -61,9 +64,23 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
             
             self.view.addSubview(segmentedBackgroundBar)
             self.view.addSubview(sControl)
+            
+            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[segmentedBackgroundBar]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar ]))
+            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(10.0)-[segmentedControl]-(10.0)-|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedControl" : sControl ]))
+            
+            var heightOffset: CGFloat = 0.0
+            if let navController = self.navigationController {
+                heightOffset = navController.navigationBar.frame.height + UIApplication.sharedApplication().statusBarFrame.height
+            }
+            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar(44.0)]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
+            if let rConstraints = removableConstraints { self.view.addConstraints(rConstraints) }
+            
+            sControl.addConstraint(NSLayoutConstraint(item: sControl, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: 29.0))
+            self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterX, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterX, multiplier: 1.0, constant: 0.0))
+            self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterY, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterY, multiplier: 1.0, constant: 0.0))
+        } else {
+            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "tableView" : tableView ]))
         }
-        
-        self.loadLayout()
     }
     
     public override func viewWillAppear(animated: Bool) {
@@ -101,30 +118,17 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     }
     
     func loadLayout() {
-        self.view.removeConstraints(self.view.constraints())
-        
-        self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "tableView" : tableView ]))
-        
-        // Set up segmented control... Add constraints
-        if let sControl = segmentedControl {
-            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[segmentedBackgroundBar]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar ]))
-            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(10.0)-[segmentedControl]-(10.0)-|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedControl" : sControl ]))
-            
+        if let rConstraints = removableConstraints {
+            self.view.removeConstraints(rConstraints)
             var heightOffset: CGFloat = 0.0
             if let navController = self.navigationController {
                 heightOffset = navController.navigationBar.frame.height + UIApplication.sharedApplication().statusBarFrame.height
             }
-            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar(44.0)]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]))
             
-            sControl.addConstraint(NSLayoutConstraint(item: sControl, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: 29.0))
-            self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterX, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterX, multiplier: 1.0, constant: 0.0))
-            self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterY, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterY, multiplier: 1.0, constant: 0.0))
-        } else {
-            self.view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "tableView" : tableView ]))
+            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar(44.0)]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
+            if let newConstraints = removableConstraints { self.view.addConstraints(newConstraints) }
         }
-        
-        self.view.layoutSubviews()
-//        self.view.layoutIfNeeded()
+        self.view.setNeedsUpdateConstraints()
     }
     
     func selectedSegment(sender: AnyObject?) {
