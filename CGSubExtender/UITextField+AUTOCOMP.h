@@ -14,6 +14,8 @@
 - (void)textField:(UITextField *)textField autoCompleteMatchFoundForTextField:(NSString *)text;
 - (void)textField:(UITextField *)textField dismissingAutoTextFieldWithFinalText:(NSString *)text;
 
+- (BOOL)textFieldShouldReturn:(UITextField *)textField;
+
 @end
 
 @protocol UITextFieldAutoDataSource <NSObject>
