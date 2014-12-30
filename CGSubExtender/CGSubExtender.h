@@ -19,6 +19,5 @@ FOUNDATION_EXPORT const unsigned char CGSubExtenderVersionString[];
 
 #import <CGSubExtender/UITextField+AUTOCOMP.h>
 #import <CGSubExtender/UIImage+ORIENT.h>
-#import <CGSubExtender/CGSearchDisplayController.h>
 
 #import <CGSubExtender/CGOpenCVMatrixTranslator.h>
