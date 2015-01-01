@@ -105,9 +105,6 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
         cell.delegate = attributedDelegate
         cell.tableView = self
         cell.keyboardType = type.keyboardType()
-        
-        // Configure the cell...
-        
         cell.propertyText = prop
         
         if let pHolder = pHolderTemp {
@@ -163,10 +160,6 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                 cell.toggleEditingProperty()
             }
         } else {
-            if let sCell = selectedCell {
-                sCell.resignAllFirstResponders()
-            }
-            
             if cell.reuseIdentifier == CGAttributedTableViewCellType.Button.simpleDescription() {
                 selectedCell = nil
                 cell.toggleEditingProperty()
@@ -180,22 +173,9 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     /* ScrollView Delegate */
     
     public func scrollViewWillBeginDragging(scrollView: UIScrollView) {
-        println("Begin Dragging")
-        if let sCell = selectedCell {
-            println("Selected Cells Exist Dragging")
-            
-            sCell.resignAllFirstResponders()
-            //            selectedCell = nil
+        if let sView = self.superview {
+            sView.endEditing(true)
         }
-        
-        if self.becomeFirstResponder() {
-            println("Became first responder")
-        }
-        if self.resignFirstResponder() {
-            println("Resigned first responder")
-        }
-        
-        
     }
 
     /* CGAttributedTableViewCell Delegate */
@@ -558,6 +538,7 @@ public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldA
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        textField.autoDelegate = self
         textField.delegate = self
     }
     

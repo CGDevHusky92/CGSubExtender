@@ -23,18 +23,18 @@ static char autoControllerKey;
 static char autoPopoverKey;
 
 @implementation UITextField (AUTOCOMP)
-@dynamic delegate;
+@dynamic autoDelegate;
 @dynamic autoController;
 @dynamic autoPopController;
 
-- (void)setDelegate:(id<UITextFieldAutoDelegate>)delegate
+- (void)setAutoDelegate:(id<UITextFieldAutoDelegate>)delegate
 {
     objc_setAssociatedObject(self, &delKey, delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     delegateRespondsTo.autoCompleteMatchFoundForTextField = [delegate respondsToSelector:@selector(textField:autoCompleteMatchFoundForTextField:)];
     delegateRespondsTo.dismissingAutoTextField = [delegate respondsToSelector:@selector(textField:dismissingAutoTextFieldWithFinalText:)];
 }
 
-- (id<UITextFieldAutoDelegate>)delegate
+- (id<UITextFieldAutoDelegate>)autoDelegate
 {
     return objc_getAssociatedObject(self, &delKey);
 }
