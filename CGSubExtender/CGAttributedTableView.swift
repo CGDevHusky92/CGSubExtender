@@ -43,7 +43,6 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
 
     required public init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        
         delegate = self
         dataSource = self
         
@@ -161,10 +160,8 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             }
         } else {
             if cell.reuseIdentifier == CGAttributedTableViewCellType.Button.simpleDescription() {
-                selectedCell = nil
                 cell.toggleEditingProperty()
             } else {
-                selectedCell = cell
                 cell.assignFirstResponder()
             }
         }
@@ -201,16 +198,8 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                 return 60.0
             } else if cellType == CGAttributedTableViewCellType.Picker || cellType == CGAttributedTableViewCellType.DatePicker {
                 if _singleEditingMode {
-                    if let sCell = selectedCell {
-                        if sCell.editMode {
-                            if let sIndexPath = selectedIndexPath {
-                                if indexPath == sIndexPath { return 162.0 }
-                            }
-                        }
-                    }
-                } else {
-                    if _editingModeEnabled { return 162.0 }
-                }
+                    if let sCell = selectedCell { if sCell.editMode { if let s = selectedIndexPath { if indexPath == s { return 162.0 } } } }
+                } else { if _editingModeEnabled { return 162.0 } }
             }
         }
         return 44.0
@@ -223,21 +212,12 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                 return 60.0
             } else if cellType == CGAttributedTableViewCellType.Picker || cellType == CGAttributedTableViewCellType.DatePicker {
                 if _singleEditingMode {
-                    if let sCell = selectedCell {
-                        if sCell.editMode {
-                            if let sIndexPath = selectedIndexPath {
-                                if indexPath == sIndexPath { return 162.0 }
-                            }
-                        }
-                    }
-                } else {
-                    if _editingModeEnabled { return 162.0 }
-                }
+                    if let sCell = selectedCell { if sCell.editMode { if let s = selectedIndexPath { if indexPath == s { return 162.0 } } } }
+                } else { if _editingModeEnabled { return 162.0 } }
             }
         }
         return 44.0
     }
-    
 }
 
 public enum CGAttributedTableViewCellType: Int {
@@ -385,8 +365,7 @@ public class CGAttributedTableViewCell: UITableViewCell {
         self.addSubview(propertyLabel)
         self.addSubview(descriptionLabel)
         
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(11.0)-[propertyLabel(220.0@750)]-(>=10.0@1000)-[descriptionLabel(280.0@750)]-(8.0)-|",
-            options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel, "descriptionLabel" : self.descriptionLabel ]))
+        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(11.0)-[propertyLabel(220.0@750)]-(>=10.0@1000)-[descriptionLabel(280.0@750)]-(8.0)-|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel, "descriptionLabel" : self.descriptionLabel ]))
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[propertyLabel(22.0)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel]))
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[descriptionLabel(22.0)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "descriptionLabel" : self.descriptionLabel]))
         
@@ -428,7 +407,7 @@ public class CGAttributedTableViewCell: UITableViewCell {
     func resignAllFirstResponders() { }
 }
 
-public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAutoDelegate {
+public class CGTextFieldTableViewCell: CGAttributedTableViewCell {
     
     var textField: UITextField!
     
@@ -485,32 +464,22 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldAut
     }
     
     override func keyboardTypeSet() {
-        if let keyType = keyboardType {
-            textField.keyboardType = keyType
-        }
+        if let k = keyboardType { textField.keyboardType = k }
     }
     
     override func descriptionTextSet() {
-        if let descText = descriptionText {
-            textField.text = descriptionText
-        }
+        if let d = descriptionText { textField.text = d }
     }
     
     override func placeHolderTextSet() {
-        if let placeText = placeholderText {
-            textField.placeholder = placeText
-        }
+        textField.placeholder = placeholderText
     }
     
     override func assignFirstResponder() {
-        println("Assigning First Responder")
-        
         textField.becomeFirstResponder()
     }
     
     override func resignAllFirstResponders() {
-        println("Resigning First Responder")
-        
         textField.resignFirstResponder()
     }
     
@@ -538,7 +507,6 @@ public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldA
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        textField.autoDelegate = self
         textField.delegate = self
     }
     

@@ -9,12 +9,12 @@
 #import "UITextField+AUTOCOMP.h"
 #import "objc/runtime.h"
 
-struct {
-    unsigned int autoCompleteMatchFoundForTextField;
-    unsigned int dismissingAutoTextField;
-} delegateRespondsTo;
+//struct {
+//    unsigned int autoCompleteMatchFoundForTextField;
+//    unsigned int dismissingAutoTextField;
+//} delegateRespondsTo;
 
-static char delKey;
+//static char delKey;
 static char dicKey;
 static char inputKey;
 static char outputKey;
@@ -23,21 +23,21 @@ static char autoControllerKey;
 static char autoPopoverKey;
 
 @implementation UITextField (AUTOCOMP)
-@dynamic autoDelegate;
+//@dynamic autoDelegate;
 @dynamic autoController;
 @dynamic autoPopController;
 
-- (void)setAutoDelegate:(id<UITextFieldAutoDelegate>)delegate
-{
-    objc_setAssociatedObject(self, &delKey, delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    delegateRespondsTo.autoCompleteMatchFoundForTextField = [delegate respondsToSelector:@selector(textField:autoCompleteMatchFoundForTextField:)];
-    delegateRespondsTo.dismissingAutoTextField = [delegate respondsToSelector:@selector(textField:dismissingAutoTextFieldWithFinalText:)];
-}
+//- (void)setAutoDelegate:(id<UITextFieldAutoDelegate>)delegate
+//{
+//    objc_setAssociatedObject(self, &delKey, delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+//    delegateRespondsTo.autoCompleteMatchFoundForTextField = [delegate respondsToSelector:@selector(textField:autoCompleteMatchFoundForTextField:)];
+//    delegateRespondsTo.dismissingAutoTextField = [delegate respondsToSelector:@selector(textField:dismissingAutoTextFieldWithFinalText:)];
+//}
 
-- (id<UITextFieldAutoDelegate>)autoDelegate
-{
-    return objc_getAssociatedObject(self, &delKey);
-}
+//- (id<UITextFieldAutoDelegate>)autoDelegate
+//{
+//    return objc_getAssociatedObject(self, &delKey);
+//}
 
 - (void)setAutoCompleteDictionary:(NSArray *)autoCompleteDictionary
 {
@@ -156,7 +156,7 @@ static char autoPopoverKey;
         
         // If a match was found in the majors list (and the popover is initialized), select that row in the popover
         if (foundMatch) {
-            if (delegateRespondsTo.autoCompleteMatchFoundForTextField)
+//            if (delegateRespondsTo.autoCompleteMatchFoundForTextField)
                 [((id<UITextFieldAutoDelegate>)self.delegate) textField:self autoCompleteMatchFoundForTextField:self.text];
         }
     }
@@ -184,7 +184,7 @@ static char autoPopoverKey;
 {
     self.text = selected;
     self.inputTemp = selected;
-    if (delegateRespondsTo.dismissingAutoTextField)
+//    if (delegateRespondsTo.dismissingAutoTextField)
         [((id<UITextFieldAutoDelegate>)self.delegate) textField:self dismissingAutoTextFieldWithFinalText:self.text];
     [self resignFirstResponder];
 }

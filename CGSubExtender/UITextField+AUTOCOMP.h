@@ -45,14 +45,14 @@
 
 @interface UITextField (AUTOCOMP) <CGAutoCompletePopoverDelegate>
 
-@property (weak, nonatomic) id<UITextFieldAutoDelegate> autoDelegate;
+//@property (weak, nonatomic) id<UITextFieldAutoDelegate> autoDelegate;
 
 @property (strong, nonatomic) CGAutoCompleteViewController *autoController;
 @property (strong, nonatomic) UIPopoverController * autoPopController;
 @property (strong, nonatomic) NSArray * autoCompleteDictionary;
 
-- (void)setAutoDelegate:(id<UITextFieldAutoDelegate>)delegate;
-- (id<UITextFieldAutoDelegate>)autoDelegate;
+//- (void)setAutoDelegate:(id<UITextFieldAutoDelegate>)delegate;
+//- (id<UITextFieldAutoDelegate>)autoDelegate;
 
 - (void)startAutoCompleteWithDictionary:(NSArray *)autoCompleteDictionary withPickerView:(BOOL)pickerEnabled;
 - (void)startAutoCompleteWithFile:(NSString *)fileName withPickerView:(BOOL)pickerEnabled;
