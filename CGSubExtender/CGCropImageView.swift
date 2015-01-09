@@ -44,6 +44,8 @@ public class CGCropImageView: UIImageView {
     }
     
     public override func layoutSubviews() {
+//        super.layoutSubviews()
+        
         if cropView == nil {
             cropView = CGCropView()
             cropView.setTranslatesAutoresizingMaskIntoConstraints(false)

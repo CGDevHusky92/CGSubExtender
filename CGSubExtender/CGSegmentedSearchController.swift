@@ -8,11 +8,14 @@
 
 import UIKit
 
-public class CGSegmentedSearchController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchControllerDelegate, UISearchBarDelegate, UISearchResultsUpdating {
+public class CGSegmentedSearchController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchControllerDelegate, UISearchBarDelegate, UISearchResultsUpdating, UIToolbarDelegate {
     
     public var selectedIndex: Int = 0
     public var segmentedControl: UISegmentedControl?
     var segmentedBackgroundBar: UIToolbar!
+    
+    var segmentedControlHeightConstraint: NSLayoutConstraint!
+    var segmentedBarHeightConstraint: NSLayoutConstraint!
     
     public var searchController: UISearchController?
     public var searchTableController: UITableViewController?
@@ -44,14 +47,14 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
                 tableView.tableHeaderView = sControl.searchBar
                 
                 sControl.delegate = self
-                sControl.hidesNavigationBarDuringPresentation = false
+                sControl.hidesNavigationBarDuringPresentation = true
                 sControl.dimsBackgroundDuringPresentation = false
                 sControl.searchBar.delegate = self
                 
                 // Search is now just presenting a view controller. As such, normal view controller
                 // presentation semantics apply. Namely that presentation will walk up the view controller
                 // hierarchy until it finds the root view controller or one that defines a presentation context.
-                definesPresentationContext = true
+                self.definesPresentationContext = true
             }
         }
         
@@ -72,10 +75,15 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
             if let navController = self.navigationController {
                 heightOffset = navController.navigationBar.frame.height + UIApplication.sharedApplication().statusBarFrame.height
             }
-            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar(44.0)]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
+            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
             if let rConstraints = removableConstraints { self.view.addConstraints(rConstraints) }
             
-            sControl.addConstraint(NSLayoutConstraint(item: sControl, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: 29.0))
+            segmentedControlHeightConstraint = NSLayoutConstraint(item: sControl, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: 29.0)
+            segmentedBarHeightConstraint = NSLayoutConstraint(item: segmentedBackgroundBar, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: 44.0)
+            
+            sControl.addConstraint(segmentedControlHeightConstraint)
+            segmentedBackgroundBar.addConstraint(segmentedBarHeightConstraint)
+            
             self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterX, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterX, multiplier: 1.0, constant: 0.0))
             self.view.addConstraint(NSLayoutConstraint(item: sControl, attribute: .CenterY, relatedBy: .Equal, toItem: segmentedBackgroundBar, attribute: .CenterY, multiplier: 1.0, constant: 0.0))
         } else {
@@ -125,7 +133,7 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
                 heightOffset = navController.navigationBar.frame.height + UIApplication.sharedApplication().statusBarFrame.height
             }
             
-            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar(44.0)]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
+            removableConstraints = NSLayoutConstraint.constraintsWithVisualFormat("V:|-(\(heightOffset))-[segmentedBackgroundBar]-(-\(heightOffset))-[tableView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "segmentedBackgroundBar" : segmentedBackgroundBar, "tableView" : tableView ]) as? [NSLayoutConstraint]
             if let newConstraints = removableConstraints { self.view.addConstraints(newConstraints) }
         }
         self.view.setNeedsUpdateConstraints()
@@ -150,6 +158,9 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     
     public func willPresentSearchController(searchController: UISearchController) {
         //NSLog(__FUNCTION__)
+        if let sControl = segmentedControl { sControl.hidden = true }
+        segmentedControlHeightConstraint.constant = 0.0
+        segmentedBarHeightConstraint.constant = 0.0
     }
     
     public func didPresentSearchController(searchController: UISearchController) {
@@ -162,6 +173,9 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     
     public func didDismissSearchController(searchController: UISearchController) {
         //NSLog(__FUNCTION__)
+        if let sControl = segmentedControl { sControl.hidden = false }
+        segmentedControlHeightConstraint.constant = 29.0
+        segmentedBarHeightConstraint.constant = 44.0
     }
     
     // MARK: UISearchResultsUpdating
