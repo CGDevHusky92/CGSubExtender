@@ -271,6 +271,9 @@ public enum CGAttributedTableViewCellType: Int {
     public var placeHolder: String?
     public var placeHolderData: [String]?
     
+    public var valid: Bool = true
+    public var invalidDescription: String?
+    
     public init(type: CGAttributedTableViewCellType = .None, withProperty prop: String = "", andDescription desc: String? = nil, withPlaceHolder plHolder: String? = nil, andPlaceHolderData plData: [String]? = nil) {
         cellType = type
         property = prop
@@ -284,6 +287,9 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     var propertyLabel: UILabel!
     var descriptionLabel: UILabel!
+    
+    var propertyWidthConstraint: NSLayoutConstraint!
+    var descriptionWidthConstraint: NSLayoutConstraint!
     
     var delegate: CGAttributedTableViewDelegate?
     weak var tableView: CGAttributedTableView?
@@ -364,17 +370,36 @@ public class CGAttributedTableViewCell: UITableViewCell {
         
         self.addSubview(propertyLabel)
         self.addSubview(descriptionLabel)
+        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(11.0)-[propertyLabel]-(10.0)-[descriptionLabel]-(8.0)-|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel, "descriptionLabel" : self.descriptionLabel ]))
         
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-(11.0)-[propertyLabel(220.0@750)]-(>=10.0@1000)-[descriptionLabel(280.0@750)]-(8.0)-|", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel, "descriptionLabel" : self.descriptionLabel ]))
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[propertyLabel(22.0)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "propertyLabel" : self.propertyLabel]))
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[descriptionLabel(22.0)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "descriptionLabel" : self.descriptionLabel]))
         
-        let propYConstraint = NSLayoutConstraint(item: propertyLabel, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: self, attribute: NSLayoutAttribute.CenterY, multiplier: 1.0, constant: 0)
-        let descYConstraint = NSLayoutConstraint(item: descriptionLabel, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: self, attribute: NSLayoutAttribute.CenterY, multiplier: 1.0, constant: 0)
+        if let windowFrame = UIApplication.sharedApplication().keyWindow?.frame {
+            let propWidth: CGFloat = (windowFrame.width - 29.0) * 0.44
+            let descWidth: CGFloat = (windowFrame.width - 29.0) * 0.56
+            
+            propertyWidthConstraint = NSLayoutConstraint(item: propertyLabel, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: propWidth)
+            propertyLabel.addConstraint(propertyWidthConstraint)
+            
+            descriptionWidthConstraint = NSLayoutConstraint(item: descriptionLabel, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: descWidth)
+            descriptionLabel.addConstraint(descriptionWidthConstraint)
+        }
+        
+        let propYConstraint = NSLayoutConstraint(item: propertyLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1.0, constant: 0)
+        let descYConstraint = NSLayoutConstraint(item: descriptionLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1.0, constant: 0)
         self.addConstraint(propYConstraint)
         self.addConstraint(descYConstraint)
         
         viewProperties.append(descriptionLabel)
+    }
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        if let windowFrame = UIApplication.sharedApplication().keyWindow?.frame {
+            propertyWidthConstraint.constant = (windowFrame.width - 29.0) * 0.44
+            descriptionWidthConstraint.constant = (windowFrame.width - 29.0) * 0.56
+        }
     }
     
     override public var reuseIdentifier: String? {
