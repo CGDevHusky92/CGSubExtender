@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import CGSubExtender
 
 public let kLoginUserAuthenticated = "kLoginUserAuthenticated"
 

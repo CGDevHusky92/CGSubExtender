@@ -7,30 +7,31 @@
 //
 
 import UIKit
+import Foundation
 
 @objc public protocol CGAutoCompleteTextFieldDelegate: UITextFieldDelegate {
     func autoCompleteTextField(textField: CGAutoCompleteTextField, autoCompleteMatchFoundForTextField text: String)
     func autoCompleteTextField(textField: CGAutoCompleteTextField, dismissingAutoTextFieldWithFinalText text: String)
 }
 
-@objc public protocol CGAutoCompletePopoverDelegate {
+protocol CGAutoCompletePopoverDelegate {
     func currentAutoFieldText() -> String
     func initialAutoStrings() -> [String]
     func currentSelectionInPicker(selected: String)
     func returnSelectedString(selected: String)
 }
 
-@objc public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate {
+public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate {
     
-    public var autoController: CGAutoCompleteViewController!
-    public var autoPopController: UIPopoverController!
-    public var autoCompleteDictionary: [String]!
+    var autoController: CGAutoCompleteViewController!
+    var autoPopController: UIPopoverController?
+    var autoCompleteDictionary: [String]!
     
     var inputTemp: String = ""
     var outputTemp: String = ""
     
     public override func resignFirstResponder() -> Bool {
-        autoPopController.dismissPopoverAnimated(true)
+        if let a = autoPopController { a.dismissPopoverAnimated(true) }
         return super.resignFirstResponder()
     }
     
@@ -45,7 +46,7 @@ import UIKit
             autoController = CGAutoCompleteViewController(selectables: autoCompleteDictionary)
             autoController.delegate = self
             autoPopController = UIPopoverController(contentViewController: autoController)
-            autoPopController.popoverContentSize = autoController.view.frame.size
+            if let a = autoPopController { a.popoverContentSize = autoController.view.frame.size }
         }
     }
     
@@ -56,6 +57,7 @@ import UIKit
             let csvContentsTemp = NSString(contentsOfFile: filePath, encoding: NSUTF8StringEncoding, error: &error)
             if let csvContents = csvContentsTemp {
                 let fileContents = csvContents.componentsSeparatedByString(",") as [String]
+                self.startAutoCompleteWithDictionary(fileContents, withPickerView: pEnabled)
             } else {
                 if let e = error {
                     println("Error: \(e.description)")
@@ -64,11 +66,15 @@ import UIKit
         }
     }
     
-    public func displayPopover() {
-        if let s = superview { autoPopController.presentPopoverFromRect(frame, inView: s, permittedArrowDirections: .Any, animated: true) }
+    func displayPopover() {
+        if let s = superview {
+            if let a = autoPopController {
+                a.presentPopoverFromRect(frame, inView: s, permittedArrowDirections: .Any, animated: true)
+            }
+        }
     }
     
-    public func autoComplete() {
+    func autoComplete() {
         let backspaced = inputTemp.hasPrefix(text)
         inputTemp = text
         
@@ -89,16 +95,14 @@ import UIKit
                     break
                 }
             }
-        
+            
             // Set the text to output (will hold the matching major, or what was typed if no match found)
             // then select the portion of the string that was completed
-            if let sTextRange = self.selectedTextRange {
-                let start = sTextRange.start
-                text = outputTemp
-                let end = sTextRange.start
-                let selectRange = self.textRangeFromPosition(start, toPosition: end)
-                self.selectedTextRange = selectRange
-            }
+            let start = self.selectedTextRange?.start
+            text = outputTemp
+            let end = self.selectedTextRange?.start
+            let selectRange = self.textRangeFromPosition(start, toPosition: end)
+            self.selectedTextRange = selectRange
             
             // If a match was found in the majors list (and the popover is initialized), select that row in the popover
             if foundMatch {
@@ -112,20 +116,20 @@ import UIKit
     
     /* AutoCompletePopover Delegate */
     
-    public func currentAutoFieldText() -> String {
+    func currentAutoFieldText() -> String {
         return self.text
     }
     
-    public func initialAutoStrings() -> [String] {
+    func initialAutoStrings() -> [String] {
         return autoCompleteDictionary
     }
     
-    public func currentSelectionInPicker(selected: String) {
+    func currentSelectionInPicker(selected: String) {
         self.text = selected
         self.inputTemp = selected
     }
     
-    public func returnSelectedString(selected: String) {
+    func returnSelectedString(selected: String) {
         self.currentSelectionInPicker(selected)
         if let delTemp = delegate {
             let d = delTemp as CGAutoCompleteTextFieldDelegate
@@ -135,26 +139,29 @@ import UIKit
     }
 }
 
-@objc public class CGAutoCompleteViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
+class CGAutoCompleteViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
     
-    public var delegate: CGAutoCompletePopoverDelegate?
+    var delegate: CGAutoCompletePopoverDelegate?
     
-    public var autoPicker: UIPickerView!
+    var autoPicker: UIPickerView!
     
-    public var autoStrings: [String]
-    public var selectedText: String = ""
+    var autoStrings = [String]()
+    var selectedText: String = ""
     
-    public required init(coder aDecoder: NSCoder) {
-        autoStrings = [String]()
+    required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
-    public init(selectables: [String]) {
-        autoStrings = selectables
-        super.init()
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
     
-    public override func viewDidLoad() {
+    init(selectables: [String]) {
+        super.init()
+        autoStrings = selectables
+    }
+    
+    override func viewDidLoad() {
         super.viewDidLoad()
         var width: CGFloat = 0.0
         if autoStrings.count > 0 {
@@ -179,7 +186,7 @@ import UIKit
         view.addSubview(autoPicker)
     }
     
-    public override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
         if let d = delegate {
             selectedText = d.currentAutoFieldText()
@@ -188,7 +195,7 @@ import UIKit
         }
     }
     
-    public override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(animated: Bool) {
         // Set the selected major back in the parent
         if let d = delegate {
             selectedText = autoStrings[autoPicker.selectedRowInComponent(0)]
@@ -199,36 +206,36 @@ import UIKit
     
     /* CGAutoPicker Delegate */
     
-    public func completeAutoSelection(selectedText: String) {
+    func completeAutoSelection(selectedText: String) {
         // Select the row for the current auto-completed major
         if let f = find(autoStrings, selectedText) { autoPicker.selectRow(f, inComponent: 0, animated: false) }
     }
     
     /* Picker View Delegate */
     
-    public func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+    func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
         return 1
     }
     
-    public func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+    func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return autoStrings.count
     }
     
-    public func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String! {
+    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String! {
         return autoStrings[row]
     }
     
-    public func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+    func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if let d = delegate { d.currentSelectionInPicker(autoStrings[row]) }
     }
     
     /* Text Size Generation */
     
-    public func generateWidthFromCurrentAttributesAndText() -> CGFloat {
+    func generateWidthFromCurrentAttributesAndText() -> CGFloat {
         return self.generateWidthFromAttributesAndText(autoStrings[autoPicker.selectedRowInComponent(0)])
     }
     
-    public func generateWidthFromAttributesAndText(text: String) -> CGFloat {
+    func generateWidthFromAttributesAndText(text: String) -> CGFloat {
         let nString = text as NSString
         return nString.sizeWithAttributes([NSFontAttributeName : UIFont.systemFontOfSize(23.5)]).width
     }

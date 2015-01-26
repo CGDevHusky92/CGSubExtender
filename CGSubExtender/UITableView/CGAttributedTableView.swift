@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Foundation
 
 @objc public protocol CGAttributedTableViewDelegate {
     
@@ -561,9 +562,9 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldDel
     }
 }
 
-public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell { //, CGAutoCompleteTextFieldDelegate {
+public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell, CGAutoCompleteTextFieldDelegate {
     
-    var textField: UITextField! //CGAutoCompleteTextField!
+    var textField: CGAutoCompleteTextField!
     
     required public init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -571,12 +572,12 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell { //, CGAuto
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-//        textField = CGAutoCompleteTextField()
+        textField = CGAutoCompleteTextField()
         textField.setTranslatesAutoresizingMaskIntoConstraints(false)
         textField.textAlignment = NSTextAlignment.Center
         textField.borderStyle = UITextBorderStyle.Bezel
         textField.hidden = true
-//        textField.delegate = self
+        textField.delegate = self
         
         self.addSubview(textField)
         
@@ -618,7 +619,7 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell { //, CGAuto
     
     override func placeHolderDataSet() {
         if let p = placeholderData {
-//            if p.count > 0 { textField.startAutoCompleteWithFile(p[0], withPickerView: true) }
+            if p.count > 0 { textField.startAutoCompleteWithFile(p[0], withPickerView: true) }
         }
     }
     
@@ -647,15 +648,15 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell { //, CGAuto
     
     /* CGAutoCompleteTextField Delegate */
     
-//    public func autoCompleteTextField(textField: CGAutoCompleteTextField, autoCompleteMatchFoundForTextField text: String) { }
+    public func autoCompleteTextField(textField: CGAutoCompleteTextField, autoCompleteMatchFoundForTextField text: String) { }
     
-//    public func autoCompleteTextField(textField: CGAutoCompleteTextField, dismissingAutoTextFieldWithFinalText text: String) {
-//        if textField.text != "" {
-//            if let del = delegate {
-//                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
-//            }
-//        }
-//    }
+    public func autoCompleteTextField(textField: CGAutoCompleteTextField, dismissingAutoTextFieldWithFinalText text: String) {
+        if textField.text != "" {
+            if let del = delegate {
+                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
+            }
+        }
+    }
 }
 
 //public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldAutoDelegate {

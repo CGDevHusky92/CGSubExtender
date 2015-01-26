@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Revision Works, LLC. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 extension NSDate {
     

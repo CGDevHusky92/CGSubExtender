@@ -9,7 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
-#import <MessageUI/MessageUI.h>
+//#import <MessageUI/MessageUI.h>
+#import <MessageUI/MFMailComposeViewController.h>
 
 //! Project version number for CGSubExtender.
 FOUNDATION_EXPORT double CGSubExtenderVersionNumber;
