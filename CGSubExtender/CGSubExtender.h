@@ -7,6 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
 #import <MessageUI/MessageUI.h>
 
 //! Project version number for CGSubExtender.
@@ -15,9 +17,5 @@ FOUNDATION_EXPORT double CGSubExtenderVersionNumber;
 //! Project version string for CGSubExtender.
 FOUNDATION_EXPORT const unsigned char CGSubExtenderVersionString[];
 
-// In this header, you should import all the public headers of your framework using statements like #import <CGSubExtender/PublicHeader.h>
-
-#import <CGSubExtender/UITextField+AUTOCOMP.h>
 #import <CGSubExtender/UIImage+ORIENT.h>
-
 #import <CGSubExtender/CGOpenCVMatrixTranslator.h>

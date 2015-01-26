@@ -13,7 +13,7 @@ import MessageUI
 // -10 : The device can't send email
 // -11 : User cancelled sending the email
 
-extension UIViewController: MFMailComposeViewControllerDelegate, UINavigationControllerDelegate {
+extension UIViewController: UINavigationControllerDelegate, MFMailComposeViewControllerDelegate {
     
     public func mailComposeController(controller: MFMailComposeViewController!, didFinishWithResult result: MFMailComposeResult, error: NSError!) {
         switch result.value {

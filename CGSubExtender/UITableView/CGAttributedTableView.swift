@@ -89,7 +89,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
         var descTemp: String?
         var pHolderTemp: String?
         var pHolderDataTemp: [String]?
-        var type: CGAttributedTableViewCellType = CGAttributedTableViewCellType.None
+        var type: CGAttributedTableViewCellType = .None
         var valid = true
         
         if let dataSrc = attributedDataSource {
@@ -190,31 +190,37 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     }
     
     public func attributedTableViewCellReturnPressed(cell: CGAttributedTableViewCell) {
-        println("I am run - return")
+        if cell.reuseIdentifier != "CGAttributedAutoCompleteCell" {
+            self.endEditing(true)
+        }
         if let dataSrc = attributedDataSource {
             var progress = false
-            
+            var newRow = cell.indexPath.row
+            var newSection = cell.indexPath.section
             let numInSection: Int = dataSrc.attributedTableView(self, numberOfRowsInSection: cell.indexPath.section)
             
-            var newSection = cell.indexPath.section
-            var newRow = cell.indexPath.row
-            
-            print("Current S:R - \(newSection):\(newRow)")
-            
             if newRow == (numInSection - 1) {
-                newRow = 0
-                newSection += 1
+                newRow = 0; newSection += 1
                 let numSections = dataSrc.numberOfSectionsInAttributedTableView(self)
                 if newSection < numSections { progress = true }
             } else {
-                newRow += 1
-                progress = true
+                newRow += 1; progress = true
             }
             
-            print("New     S:R - \(newSection):\(newRow)")
-            
             if progress {
-                println("Progress")
+                let indexPath = NSIndexPath(forRow: newRow, inSection: newSection)
+                let cell = self.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
+                if let rId = cell.reuseIdentifier {
+                    let cellTypeTemp = CGAttributedTableViewCellType(rawValue: CGAttributedTableViewCellType.valueFromDescription(rId))
+                    if let cellType = cellTypeTemp {
+                        let cellKeyboard = cellType.keyboardType()
+                        if let c = cellKeyboard {
+                            cell.assignFirstResponder()
+                        } else {
+                            self.endEditing(true)
+                        }
+                    }
+                }
             }
         }
     }
@@ -255,6 +261,27 @@ public enum CGAttributedTableViewCellType: Int {
     case TextFieldNumber, TextFieldPhone, TextFieldEmail, AutoComplete
     case TextView, Picker, DatePicker, Switch, Button, None
     
+    static func valueFromDescription(desc: String) -> Int {
+        switch desc {
+        case "CGAttributedTextFieldCell":
+            return CGAttributedTableViewCellType.TextField.rawValue
+        case "CGAttributedAutoCompleteCell":
+            return CGAttributedTableViewCellType.AutoComplete.rawValue
+        case "CGAttributedTextViewCell":
+            return CGAttributedTableViewCellType.TextView.rawValue
+        case "CGAttributedPickerCell":
+            return CGAttributedTableViewCellType.Picker.rawValue
+        case "CGAttributedDatePickerCell":
+            return CGAttributedTableViewCellType.DatePicker.rawValue
+        case "CGAttributedSwitchCell":
+            return CGAttributedTableViewCellType.Switch.rawValue
+        case "CGAttributedButtonCell":
+            return CGAttributedTableViewCellType.Button.rawValue
+        default:
+            return -1
+        }
+    }
+    
     func simpleDescription() -> String {
         switch self {
         case .TextField, .TextFieldNumber, .TextFieldPhone, .TextFieldEmail:
@@ -276,7 +303,7 @@ public enum CGAttributedTableViewCellType: Int {
         }
     }
     
-    func keyboardType() -> UIKeyboardType {
+    func keyboardType() -> UIKeyboardType? {
         switch self {
         case .TextField:
             return UIKeyboardType.Default
@@ -286,10 +313,12 @@ public enum CGAttributedTableViewCellType: Int {
             return UIKeyboardType.PhonePad
         case .TextFieldEmail:
             return UIKeyboardType.EmailAddress
+        case .AutoComplete:
+            return UIKeyboardType.Default
         case .TextView:
             return UIKeyboardType.Default
         default:
-            return UIKeyboardType.Default
+            return nil
         }
     }
 }
@@ -473,20 +502,11 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldDel
         self.addSubview(textField)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[textField(30)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "textField" : self.textField ]))
-        let widthConstraint = NSLayoutConstraint(item: textField, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: textField, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: textField, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
-        
-        self.addConstraint(widthConstraint)
-        self.addConstraint(xConstraint)
-        self.addConstraint(yConstraint)
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0))
         
         editProperties.append(textField)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "checkForAndSaveChanges", name: UITextFieldTextDidEndEditingNotification, object: textField)
-    }
-    
-    deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
     override public var reuseIdentifier: String? {
@@ -527,7 +547,7 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldDel
     
     /* Text Field Delegate */
     
-    func checkForAndSaveChanges() {
+    public func textFieldDidEndEditing(textField: UITextField) {
         if textField.text != "" || textField.text != descriptionText {
             if let del = delegate {
                 del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
@@ -536,14 +556,14 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldDel
     }
     
     public func textFieldShouldReturn(textField: UITextField) -> Bool {
-        if let del = delegate {
-            del.attributedTableViewCellReturnPressed(self)
-        }
+        if let d = delegate { d.attributedTableViewCellReturnPressed(self) }
         return true
     }
 }
 
-public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldAutoDelegate {
+public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell { //, CGAutoCompleteTextFieldDelegate {
+    
+    var textField: UITextField! //CGAutoCompleteTextField!
     
     required public init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -551,31 +571,123 @@ public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldA
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        textField.delegate = self
+//        textField = CGAutoCompleteTextField()
+        textField.setTranslatesAutoresizingMaskIntoConstraints(false)
+        textField.textAlignment = NSTextAlignment.Center
+        textField.borderStyle = UITextBorderStyle.Bezel
+        textField.hidden = true
+//        textField.delegate = self
+        
+        self.addSubview(textField)
+        
+        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[textField(30)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "textField" : self.textField ]))
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textField, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0))
+        
+        editProperties.append(textField)
     }
     
     override public var reuseIdentifier: String? {
         get { return CGAttributedTableViewCellType.AutoComplete.simpleDescription() }
     }
     
-    override func placeHolderDataSet() {
-        if let pData = placeholderData {
-            if pData.count > 0 {
-                textField.startAutoCompleteWithFile(pData[0], withPickerView: true)
+    override func toggleEditingProperty() {
+        super.toggleEditingProperty()
+        if !editMode {
+            if textField.text != "" {
+                if let del = delegate {
+                    del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
+                    textField.text = ""
+                }
             }
         }
     }
     
-    public func textField(textField: UITextField!, autoCompleteMatchFoundForTextField text: String!) { }
+    override func keyboardTypeSet() {
+        if let k = keyboardType { textField.keyboardType = k }
+    }
     
-    public func textField(textField: UITextField!, dismissingAutoTextFieldWithFinalText text: String!) {
-        if textField.text != "" {
+    override func descriptionTextSet() {
+        if let d = descriptionText { textField.text = d }
+    }
+    
+    override func placeHolderTextSet() {
+        textField.placeholder = placeholderText
+    }
+    
+    override func placeHolderDataSet() {
+        if let p = placeholderData {
+//            if p.count > 0 { textField.startAutoCompleteWithFile(p[0], withPickerView: true) }
+        }
+    }
+    
+    override func assignFirstResponder() {
+        textField.becomeFirstResponder()
+    }
+    
+    override func resignAllFirstResponders() {
+        textField.resignFirstResponder()
+    }
+    
+    /* Text Field Delegate */
+    
+    public func textFieldDidEndEditing(textField: UITextField) {
+        if textField.text != "" || textField.text != descriptionText {
             if let del = delegate {
                 del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
             }
         }
     }
+    
+    public func textFieldShouldReturn(textField: UITextField) -> Bool {
+        if let d = delegate { d.attributedTableViewCellReturnPressed(self) }
+        return true
+    }
+    
+    /* CGAutoCompleteTextField Delegate */
+    
+//    public func autoCompleteTextField(textField: CGAutoCompleteTextField, autoCompleteMatchFoundForTextField text: String) { }
+    
+//    public func autoCompleteTextField(textField: CGAutoCompleteTextField, dismissingAutoTextFieldWithFinalText text: String) {
+//        if textField.text != "" {
+//            if let del = delegate {
+//                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
+//            }
+//        }
+//    }
 }
+
+//public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldAutoDelegate {
+//    
+//    required public init(coder aDecoder: NSCoder) {
+//        super.init(coder: aDecoder)
+//    }
+//    
+//    override public init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+//        super.init(style: style, reuseIdentifier: reuseIdentifier)
+//    }
+//    
+//    override public var reuseIdentifier: String? {
+//        get { return CGAttributedTableViewCellType.AutoComplete.simpleDescription() }
+//    }
+//    
+//    override func placeHolderDataSet() {
+//        if let p = placeholderData {
+//            if p.count > 0 { textField.startAutoCompleteWithFile(p[0], withPickerView: true) }
+//        }
+//    }
+//    
+//    public func textField(textField: UITextField!, autoCompleteMatchFoundForTextField text: String!) { }
+//    
+//    public func textField(textField: UITextField!, dismissingAutoTextFieldWithFinalText text: String!) {
+//        if textField.text != "" {
+//            if let del = delegate {
+//                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
+//            }
+//        }
+//    }
+//}
 
 public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDelegate {
     
@@ -588,6 +700,7 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         viewProperties.removeLast()
+        
         descriptionLabel.hidden = true
         
         textView = UITextView()
@@ -599,13 +712,9 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
         self.addSubview(textView)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[textView(52)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "textView" : self.textView ]))
-        let widthConstraint = NSLayoutConstraint(item: textView, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: textView, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: textView, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
-        
-        self.addConstraint(widthConstraint)
-        self.addConstraint(xConstraint)
-        self.addConstraint(yConstraint)
+        self.addConstraint(NSLayoutConstraint(item: textView, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textView, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: textView, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0))
     }
     
     override public var reuseIdentifier: String? {
@@ -625,7 +734,6 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
     }
     
     override func toggleEditingProperty() {
-        textView.resignFirstResponder()
         super.toggleEditingProperty()
         if editMode {
             textView.editable = true
@@ -664,13 +772,9 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
         self.addSubview(picker)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[picker(162)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "picker" : self.picker ]))
-        let widthConstraint = NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
-        
-        self.addConstraint(widthConstraint)
-        self.addConstraint(xConstraint)
-        self.addConstraint(yConstraint)
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0))
         
         editProperties.append(picker)
     }
@@ -680,13 +784,10 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
     }
     
     override func descriptionTextSet() {
-        if let descText = descriptionText {
+        if let d = descriptionText {
             if let pData = placeholderData {
-                for (index, value) in enumerate(pData) {
-                    if descText == value {
-                        picker.selectRow(index, inComponent: 0, animated: false)
-                        break
-                    }
+                for (i, v) in enumerate(pData) {
+                    if d == v { picker.selectRow(i, inComponent: 0, animated: false); break }
                 }
             }
         }
@@ -699,29 +800,22 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
     }
     
     public func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        if let pData = placeholderData {
-            return pData.count
-        }
+        if let p = placeholderData { return p.count }
         return 0
     }
     
     public func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String! {
-        if let pData = placeholderData {
-            return pData[row]
-        }
+        if let p = placeholderData { return p[row] }
         return ""
     }
     
     public func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if let del = delegate {
-            if let pData = placeholderData {
-                if pData.count > row {
-                    del.attributedTableViewCell(self, updateDescriptionWithData: pData[row])
-                }
+            if let p = placeholderData {
+                if p.count > row { del.attributedTableViewCell(self, updateDescriptionWithData: p[row]) }
             }
         }
     }
-    
 }
 
 public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDelegate {
@@ -742,13 +836,9 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
         self.addSubview(picker)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[picker(162)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "picker" : self.picker ]))
-        let widthConstraint = NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
-        
-        self.addConstraint(widthConstraint)
-        self.addConstraint(xConstraint)
-        self.addConstraint(yConstraint)
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0))
+        self.addConstraint(NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0))
         
         editProperties.append(picker)
         picker.addTarget(self, action: "checkForAndSaveChanges", forControlEvents: .ValueChanged)
@@ -759,10 +849,7 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
     }
     
     override func descriptionTextSet() {
-        if let descText = descriptionText {
-            let date = NSDate(string: descText)
-            picker.setDate(date, animated: false)
-        }
+        if let d = descriptionText { picker.setDate(NSDate(string: d), animated: false) }
     }
     
     func checkForAndSaveChanges() {
