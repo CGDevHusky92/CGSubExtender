@@ -26,7 +26,7 @@ import UIKit
     
 }
 
-public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableViewDelegate {
+public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableViewDelegate, CGAttributedTableViewCellDelegate {
     
     public var attributedDelegate: CGAttributedTableViewDelegate?
     public var attributedDataSource: CGAttributedTableViewDataSource?
@@ -90,6 +90,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
         var pHolderTemp: String?
         var pHolderDataTemp: [String]?
         var type: CGAttributedTableViewCellType = CGAttributedTableViewCellType.None
+        var valid = true
         
         if let dataSrc = attributedDataSource {
             let cellDescription = dataSrc.attributedTableView(self, cellDescriptionForRowAtIndexPath: indexPath)
@@ -98,25 +99,24 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             descTemp = cellDescription.descriptionText
             pHolderTemp = cellDescription.placeHolder
             pHolderDataTemp = cellDescription.placeHolderData
+            valid = cellDescription.valid
         }
         
         let cell: CGAttributedTableViewCell = tableView.dequeueReusableCellWithIdentifier(type.simpleDescription(), forIndexPath: indexPath) as CGAttributedTableViewCell
-        cell.delegate = attributedDelegate
-        cell.tableView = self
+        cell.delegate = self
+        cell.indexPath = indexPath
         cell.keyboardType = type.keyboardType()
         cell.propertyText = prop
         
-        if let pHolder = pHolderTemp {
-            cell.placeholderText = pHolder
+        if valid {
+            cell.backgroundColor = UIColor.whiteColor()
+        } else {
+            cell.backgroundColor = UIColor(red: 255.0 / 255.0, green: 20.0 / 255.0, blue: 20.0 / 255.0, alpha: 0.5)
         }
         
-        if let pHolderData = pHolderDataTemp {
-            cell.placeholderData = pHolderData
-        }
-        
-        if let desc = descTemp {
-            cell.descriptionText = desc
-        }
+        if let p = pHolderTemp { cell.placeholderText = p }
+        if let pD = pHolderDataTemp { cell.placeholderData = pD }
+        if let d = descTemp { cell.descriptionText = d }
         
         if cell.reuseIdentifier != CGAttributedTableViewCellType.Button.simpleDescription() {
             if _singleEditingMode {
@@ -174,18 +174,48 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             sView.endEditing(true)
         }
     }
-
+    
     /* CGAttributedTableViewCell Delegate */
     
-    public func attributedCell(tableViewCell: CGAttributedTableViewCell, updateIndexPath indexPath: NSIndexPath, withData data: AnyObject) {
+    public func attributedTableViewCell(cell: CGAttributedTableViewCell, updateDescriptionWithData data: AnyObject) {
         if let del = attributedDelegate {
-            del.attributedTableView(self, updateDescriptionAtIndexPath: indexPath, withData: data)
+            del.attributedTableView(self, updateDescriptionAtIndexPath: cell.indexPath, withData: data)
         }
     }
     
-    public func attributedCell(tableViewCell: CGAttributedTableViewCell, buttonPressedAtIndexPath indexPath: NSIndexPath) {
+    public func attributedTableViewCellButtonPressed(cell: CGAttributedTableViewCell) {
         if let del = attributedDelegate {
-            del.attributedTableView(self, buttonPressedAtIndexPath: indexPath)
+            del.attributedTableView(self, buttonPressedAtIndexPath: cell.indexPath)
+        }
+    }
+    
+    public func attributedTableViewCellReturnPressed(cell: CGAttributedTableViewCell) {
+        println("I am run - return")
+        if let dataSrc = attributedDataSource {
+            var progress = false
+            
+            let numInSection: Int = dataSrc.attributedTableView(self, numberOfRowsInSection: cell.indexPath.section)
+            
+            var newSection = cell.indexPath.section
+            var newRow = cell.indexPath.row
+            
+            print("Current S:R - \(newSection):\(newRow)")
+            
+            if newRow == (numInSection - 1) {
+                newRow = 0
+                newSection += 1
+                let numSections = dataSrc.numberOfSectionsInAttributedTableView(self)
+                if newSection < numSections { progress = true }
+            } else {
+                newRow += 1
+                progress = true
+            }
+            
+            print("New     S:R - \(newSection):\(newRow)")
+            
+            if progress {
+                println("Progress")
+            }
         }
     }
     
@@ -264,6 +294,14 @@ public enum CGAttributedTableViewCellType: Int {
     }
 }
 
+@objc public protocol CGAttributedTableViewCellDelegate {
+    
+    func attributedTableViewCell(cell: CGAttributedTableViewCell, updateDescriptionWithData data: AnyObject)
+    func attributedTableViewCellButtonPressed(cell: CGAttributedTableViewCell)
+    func attributedTableViewCellReturnPressed(cell: CGAttributedTableViewCell)
+    
+}
+
 @objc public class CGAttributedTableViewCellDescription {
     public var cellType: CGAttributedTableViewCellType
     public var property: String
@@ -285,19 +323,18 @@ public enum CGAttributedTableViewCellType: Int {
 
 public class CGAttributedTableViewCell: UITableViewCell {
     
+    weak var delegate: CGAttributedTableViewCellDelegate?
+    
+    var indexPath: NSIndexPath = NSIndexPath()
+    
     var propertyLabel: UILabel!
     var descriptionLabel: UILabel!
     
     var propertyWidthConstraint: NSLayoutConstraint!
     var descriptionWidthConstraint: NSLayoutConstraint!
     
-    var delegate: CGAttributedTableViewDelegate?
-    weak var tableView: CGAttributedTableView?
-    
     var propertyText: String? {
-        get {
-            return propertyLabel.text
-        }
+        get { return propertyLabel.text }
         set(newPropertyText) {
             propertyLabel.text = newPropertyText
             self.propertyTextSet()
@@ -305,9 +342,7 @@ public class CGAttributedTableViewCell: UITableViewCell {
     }
     
     var descriptionText: String? {
-        get {
-            return descriptionLabel.text
-        }
+        get { return descriptionLabel.text }
         set(newDescriptionText) {
             descriptionLabel.text = newDescriptionText
             self.descriptionTextSet()
@@ -325,9 +360,7 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     var _placeholderText: String?
     var placeholderText: String? {
-        get {
-            return _placeholderText
-        }
+        get { return _placeholderText }
         set(newPlaceHolder) {
             _placeholderText = newPlaceHolder
             self.placeHolderTextSet()
@@ -336,9 +369,7 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     var _placeholderData: [String]?
     var placeholderData: [String]? {
-        get {
-            return _placeholderData
-        }
+        get { return _placeholderData }
         set(newPlaceHolder) {
             _placeholderData = newPlaceHolder
             self.placeHolderDataSet()
@@ -379,10 +410,10 @@ public class CGAttributedTableViewCell: UITableViewCell {
             let propWidth: CGFloat = (windowFrame.width - 29.0) * 0.44
             let descWidth: CGFloat = (windowFrame.width - 29.0) * 0.56
             
-            propertyWidthConstraint = NSLayoutConstraint(item: propertyLabel, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: propWidth)
+            propertyWidthConstraint = NSLayoutConstraint(item: propertyLabel, attribute: .Width, relatedBy: .LessThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: propWidth)
             propertyLabel.addConstraint(propertyWidthConstraint)
             
-            descriptionWidthConstraint = NSLayoutConstraint(item: descriptionLabel, attribute: .Width, relatedBy: .Equal, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: descWidth)
+            descriptionWidthConstraint = NSLayoutConstraint(item: descriptionLabel, attribute: .Width, relatedBy: .GreaterThanOrEqual, toItem: nil, attribute: .NotAnAttribute, multiplier: 1.0, constant: descWidth)
             descriptionLabel.addConstraint(descriptionWidthConstraint)
         }
         
@@ -408,31 +439,21 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     func toggleEditingProperty() {
         self.resignAllFirstResponders()
-        for prop in editProperties {
-            prop.hidden = editMode
-        }
+        for p in editProperties { p.hidden = editMode }
         editMode = !editMode
-        for prop in viewProperties {
-            prop.hidden = editMode
-        }
+        for p in viewProperties { p.hidden = editMode }
     }
     
     func propertyTextSet() { }
-    
     func descriptionTextSet() { }
-    
     func keyboardTypeSet() { }
-    
     func placeHolderTextSet() { }
-    
     func placeHolderDataSet() { }
-    
     func assignFirstResponder() { }
-    
     func resignAllFirstResponders() { }
 }
 
-public class CGTextFieldTableViewCell: CGAttributedTableViewCell {
+public class CGTextFieldTableViewCell: CGAttributedTableViewCell, UITextFieldDelegate {
     
     var textField: UITextField!
     
@@ -447,13 +468,14 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell {
         textField.textAlignment = NSTextAlignment.Center
         textField.borderStyle = UITextBorderStyle.Bezel
         textField.hidden = true
+        textField.delegate = self
         
         self.addSubview(textField)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[textField(30)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "textField" : self.textField ]))
-        let widthConstraint = NSLayoutConstraint(item: textField, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: textField, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: textField, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterY, multiplier: 1, constant: 0)
+        let widthConstraint = NSLayoutConstraint(item: textField, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
+        let xConstraint = NSLayoutConstraint(item: textField, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
+        let yConstraint = NSLayoutConstraint(item: textField, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
         
         self.addConstraint(widthConstraint)
         self.addConstraint(xConstraint)
@@ -476,13 +498,8 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell {
         if !editMode {
             if textField.text != "" {
                 if let del = delegate {
-                    if let tView = tableView {
-                        let indexPathTemp = tView.indexPathForCell(self)
-                        if let indexPath = indexPathTemp {
-                            del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
-                            textField.text = ""
-                        }
-                    }
+                    del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
+                    textField.text = ""
                 }
             }
         }
@@ -513,14 +530,16 @@ public class CGTextFieldTableViewCell: CGAttributedTableViewCell {
     func checkForAndSaveChanges() {
         if textField.text != "" || textField.text != descriptionText {
             if let del = delegate {
-                if let tView = tableView {
-                    let indexPathTemp = tView.indexPathForCell(self)
-                    if let indexPath = indexPathTemp {
-                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
-                    }
-                }
+                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
             }
         }
+    }
+    
+    public func textFieldShouldReturn(textField: UITextField) -> Bool {
+        if let del = delegate {
+            del.attributedTableViewCellReturnPressed(self)
+        }
+        return true
     }
 }
 
@@ -552,12 +571,7 @@ public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldA
     public func textField(textField: UITextField!, dismissingAutoTextFieldWithFinalText text: String!) {
         if textField.text != "" {
             if let del = delegate {
-                if let tView = tableView {
-                    let indexPathTemp = tView.indexPathForCell(self)
-                    if let indexPath = indexPathTemp {
-                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textField.text)
-                    }
-                }
+                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
             }
         }
     }
@@ -585,9 +599,9 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
         self.addSubview(textView)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[textView(52)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "textView" : self.textView ]))
-        let widthConstraint = NSLayoutConstraint(item: textView, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: textView, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: textView, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterY, multiplier: 1, constant: 0)
+        let widthConstraint = NSLayoutConstraint(item: textView, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
+        let xConstraint = NSLayoutConstraint(item: textView, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
+        let yConstraint = NSLayoutConstraint(item: textView, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
         
         self.addConstraint(widthConstraint)
         self.addConstraint(xConstraint)
@@ -618,24 +632,14 @@ public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDeleg
         } else {
             textView.editable = false
             if let del = delegate {
-                if let tView = tableView {
-                    let indexPathTemp = tView.indexPathForCell(self)
-                    if let indexPath = indexPathTemp {
-                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textView.text)
-                    }
-                }
+                del.attributedTableViewCell(self, updateDescriptionWithData: textView.text)
             }
         }
     }
     
     public func textViewDidEndEditing(textView: UITextView) {
         if let del = delegate {
-            if let tView = tableView {
-                let indexPathTemp = tView.indexPathForCell(self)
-                if let indexPath = indexPathTemp {
-                    del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: textView.text)
-                }
-            }
+            del.attributedTableViewCell(self, updateDescriptionWithData: textView.text)
         }
     }
 }
@@ -660,9 +664,9 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
         self.addSubview(picker)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[picker(162)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "picker" : self.picker ]))
-        let widthConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterY, multiplier: 1, constant: 0)
+        let widthConstraint = NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
+        let xConstraint = NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
+        let yConstraint = NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
         
         self.addConstraint(widthConstraint)
         self.addConstraint(xConstraint)
@@ -710,14 +714,9 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
     
     public func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if let del = delegate {
-            if let tView = tableView {
-                let indexPathTemp = tView.indexPathForCell(self)
-                if let indexPath = indexPathTemp {
-                    if let pData = placeholderData {
-                        if pData.count > row {
-                            del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: pData[row])
-                        }
-                    }
+            if let pData = placeholderData {
+                if pData.count > row {
+                    del.attributedTableViewCell(self, updateDescriptionWithData: pData[row])
                 }
             }
         }
@@ -743,16 +742,16 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
         self.addSubview(picker)
         
         self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[picker(162)]", options: NSLayoutFormatOptions(0), metrics: nil, views: [ "picker" : self.picker ]))
-        let widthConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 0)
-        let xConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: 0)
-        let yConstraint = NSLayoutConstraint(item: picker, attribute: NSLayoutAttribute.CenterY, relatedBy: NSLayoutRelation.Equal, toItem: descriptionLabel, attribute: NSLayoutAttribute.CenterY, multiplier: 1, constant: 0)
+        let widthConstraint = NSLayoutConstraint(item: picker, attribute: .Width, relatedBy: .Equal, toItem: descriptionLabel, attribute: .Width, multiplier: 1, constant: 0)
+        let xConstraint = NSLayoutConstraint(item: picker, attribute: .CenterX, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterX, multiplier: 1, constant: 0)
+        let yConstraint = NSLayoutConstraint(item: picker, attribute: .CenterY, relatedBy: .Equal, toItem: descriptionLabel, attribute: .CenterY, multiplier: 1, constant: 0)
         
         self.addConstraint(widthConstraint)
         self.addConstraint(xConstraint)
         self.addConstraint(yConstraint)
         
         editProperties.append(picker)
-        picker.addTarget(self, action: "checkForAndSaveChanges", forControlEvents: UIControlEvents.ValueChanged)
+        picker.addTarget(self, action: "checkForAndSaveChanges", forControlEvents: .ValueChanged)
     }
     
     override public var reuseIdentifier: String? {
@@ -768,13 +767,8 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
     
     func checkForAndSaveChanges() {
         if let del = delegate {
-            if let tView = tableView {
-                let indexPathTemp = tView.indexPathForCell(self)
-                if let indexPath = indexPathTemp {
-                    if let date = picker.date.stringFromDate() {
-                        del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: date)
-                    }
-                }
+            if let date = picker.date.stringFromDate() {
+                del.attributedTableViewCell(self, updateDescriptionWithData: date)
             }
         }
     }
@@ -839,13 +833,7 @@ public class CGSwitchTableViewCell: CGAttributedTableViewCell {
     
     func switchToggled() {
         if let del = delegate {
-            if let tView = tableView {
-                let indexPathTemp = tView.indexPathForCell(self)
-                if let indexPath = indexPathTemp {
-                    let positionString = switchControl.on ? "Yes" : "No"
-                    del.attributedTableView(tView, updateDescriptionAtIndexPath: indexPath, withData: positionString)
-                }
-            }
+            del.attributedTableViewCell(self, updateDescriptionWithData: switchControl.on ? "Yes" : "No")
         }
     }
 }
@@ -860,13 +848,11 @@ public class CGButtonTableViewCell: CGAttributedTableViewCell {
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        
         propertyLabel.hidden = true
         
         self.removeConstraints(self.constraints())
-        
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:[superview]-(<=1)-[descriptionLabel]", options: NSLayoutFormatOptions.AlignAllCenterY, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[superview]-(<=1)-[descriptionLabel(22.0)]", options: NSLayoutFormatOptions.AlignAllCenterX, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
+        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:[superview]-(<=1)-[descriptionLabel]", options: .AlignAllCenterY, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
+        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[superview]-(<=1)-[descriptionLabel(22.0)]", options: .AlignAllCenterX, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
     }
     
     override public var reuseIdentifier: String? {
@@ -879,12 +865,7 @@ public class CGButtonTableViewCell: CGAttributedTableViewCell {
     
     override func toggleEditingProperty() {
         if let del = delegate {
-            if let tView = tableView {
-                let indexPathTemp = tView.indexPathForCell(self)
-                if let indexPath = indexPathTemp {
-                    del.attributedTableView(tView, buttonPressedAtIndexPath: indexPath)
-                }
-            }
+            del.attributedTableViewCellButtonPressed(self)
         }
     }
 }
