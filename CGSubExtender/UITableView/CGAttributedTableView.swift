@@ -410,6 +410,8 @@ public class CGAttributedTableViewCell: UITableViewCell {
     }
     
     var editMode = false
+    var modifiedLayout = true
+    
     var viewProperties: [UIView]!
     var editProperties: [UIView]!
     
@@ -460,9 +462,11 @@ public class CGAttributedTableViewCell: UITableViewCell {
     
     public override func layoutSubviews() {
         super.layoutSubviews()
-        if let windowFrame = UIApplication.sharedApplication().keyWindow?.frame {
-            propertyWidthConstraint.constant = (windowFrame.width - 29.0) * 0.44
-            descriptionWidthConstraint.constant = (windowFrame.width - 29.0) * 0.56
+        if modifiedLayout {
+            if let windowFrame = UIApplication.sharedApplication().keyWindow?.frame {
+                propertyWidthConstraint.constant = (windowFrame.width - 29.0) * 0.44
+                descriptionWidthConstraint.constant = (windowFrame.width - 29.0) * 0.56
+            }
         }
     }
     
@@ -910,11 +914,13 @@ public class CGButtonTableViewCell: CGAttributedTableViewCell {
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        modifiedLayout = false
         propertyLabel.hidden = true
+        descriptionLabel.textAlignment = .Center
         
         self.removeConstraints(self.constraints())
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:[superview]-(<=1)-[descriptionLabel]", options: .AlignAllCenterY, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[superview]-(<=1)-[descriptionLabel(22.0)]", options: .AlignAllCenterX, metrics: nil, views: [ "superview" : self, "descriptionLabel" : self.descriptionLabel ]))
+        self.addConstraint(NSLayoutConstraint(item: descriptionLabel, attribute: .CenterX, relatedBy: .Equal, toItem: self, attribute: .CenterX, multiplier: 1.0, constant: 0.0))
+        self.addConstraint(NSLayoutConstraint(item: descriptionLabel, attribute: .CenterY, relatedBy: .Equal, toItem: self, attribute: .CenterY, multiplier: 1.0, constant: 0.0))
     }
     
     override public var reuseIdentifier: String? {
