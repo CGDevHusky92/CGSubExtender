@@ -30,10 +30,10 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
     var inputTemp: String = ""
     var outputTemp: String = ""
     
-    public override func resignFirstResponder() -> Bool {
-        if let a = autoPopController { a.dismissPopoverAnimated(true) }
-        return super.resignFirstResponder()
-    }
+//    public override func resignFirstResponder() -> Bool {
+//        if let a = autoPopController { a.dismissPopoverAnimated(true) }
+//        return super.resignFirstResponder()
+//    }
     
     /* Auto Complete Protocol */
     
@@ -72,6 +72,10 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
                 a.presentPopoverFromRect(frame, inView: s, permittedArrowDirections: .Any, animated: true)
             }
         }
+    }
+    
+    public func dismissPopover() {
+        if let a = autoPopController { a.dismissPopoverAnimated(true) }
     }
     
     func autoComplete() {

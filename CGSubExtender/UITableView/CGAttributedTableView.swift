@@ -191,9 +191,9 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     }
     
     public func attributedTableViewCellReturnPressed(cell: CGAttributedTableViewCell) {
-        if cell.reuseIdentifier != "CGAttributedAutoCompleteCell" {
+//        if cell.reuseIdentifier != "CGAttributedAutoCompleteCell" {
             self.endEditing(true)
-        }
+//        }
         if let dataSrc = attributedDataSource {
             var progress = false
             var newRow = cell.indexPath.row
@@ -217,6 +217,9 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
                         let cellKeyboard = cellType.keyboardType()
                         if let c = cellKeyboard {
                             cell.assignFirstResponder()
+                            if cell.reuseIdentifier != "CGAttributedAutoCompleteCell" {
+                                cell.assignFirstResponder()
+                            }
                         } else {
                             self.endEditing(true)
                         }
@@ -628,6 +631,7 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell, CGAutoCompl
     }
     
     override func resignAllFirstResponders() {
+        textField.dismissPopover()
         textField.resignFirstResponder()
     }
     
@@ -642,6 +646,7 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell, CGAutoCompl
     }
     
     public func textFieldShouldReturn(textField: UITextField) -> Bool {
+        self.textField.dismissPopover()
         if let d = delegate { d.attributedTableViewCellReturnPressed(self) }
         return true
     }
@@ -658,37 +663,6 @@ public class CGAutoCompleteTableViewCell: CGAttributedTableViewCell, CGAutoCompl
         }
     }
 }
-
-//public class CGAutoCompleteTableViewCell: CGTextFieldTableViewCell, UITextFieldAutoDelegate {
-//    
-//    required public init(coder aDecoder: NSCoder) {
-//        super.init(coder: aDecoder)
-//    }
-//    
-//    override public init(style: UITableViewCellStyle, reuseIdentifier: String?) {
-//        super.init(style: style, reuseIdentifier: reuseIdentifier)
-//    }
-//    
-//    override public var reuseIdentifier: String? {
-//        get { return CGAttributedTableViewCellType.AutoComplete.simpleDescription() }
-//    }
-//    
-//    override func placeHolderDataSet() {
-//        if let p = placeholderData {
-//            if p.count > 0 { textField.startAutoCompleteWithFile(p[0], withPickerView: true) }
-//        }
-//    }
-//    
-//    public func textField(textField: UITextField!, autoCompleteMatchFoundForTextField text: String!) { }
-//    
-//    public func textField(textField: UITextField!, dismissingAutoTextFieldWithFinalText text: String!) {
-//        if textField.text != "" {
-//            if let del = delegate {
-//                del.attributedTableViewCell(self, updateDescriptionWithData: textField.text)
-//            }
-//        }
-//    }
-//}
 
 public class CGTextViewTableViewCell: CGAttributedTableViewCell, UITextViewDelegate {
     
