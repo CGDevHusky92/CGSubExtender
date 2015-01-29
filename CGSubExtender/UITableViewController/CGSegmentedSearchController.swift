@@ -184,8 +184,6 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     
     // MARK: UITableViewDataSource
     
-    public func numberOfSectionsInTableView(tableView: UITableView) -> Int { return 0 }
-    
     public func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return 0 }
     
     public func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell { return UITableViewCell() }
