@@ -38,8 +38,29 @@ extension NSDate {
         }
     }
     
-    public func stringFromDate() -> String? {
-        return self.dateFormatter.stringFromDate(self)
+    public func stringFromDateWithFormat(format: String) -> String {
+        dateFormatter.dateFormat = format
+        return dateFormatter.stringFromDate(self)
+    }
+    
+    public func stringFromDate() -> String {
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return dateFormatter.stringFromDate(self)
+    }
+    
+    public func prettyDateString() -> String {
+        dateFormatter.dateFormat = "dd/MM/yyyy"
+        return dateFormatter.stringFromDate(self)
+    }
+    
+    public func prettyTimeString() -> String {
+        dateFormatter.dateFormat = "HH:mm"
+        return dateFormatter.stringFromDate(self)
+    }
+    
+    public func prettyDateAndTimeString() -> String {
+        dateFormatter.dateFormat = "h:mm a 'on' MM/dd/yyyy"
+        return dateFormatter.stringFromDate(self)
     }
     
 }

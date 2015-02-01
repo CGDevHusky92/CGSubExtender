@@ -833,9 +833,7 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
     
     func checkForAndSaveChanges() {
         if let del = delegate {
-            if let date = picker.date.stringFromDate() {
-                del.attributedTableViewCell(self, updateDescriptionWithData: date)
-            }
+            del.attributedTableViewCell(self, updateDescriptionWithData: picker.date.prettyDateAndTimeString())
         }
     }
 }
