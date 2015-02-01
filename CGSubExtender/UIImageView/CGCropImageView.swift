@@ -71,8 +71,12 @@ public class CGCropImageView: UIImageView {
     public func cropImage() {
         if !cropView.doneCropping {
             cropView.doneCropping = true
-            let newImage = CGOpenCVMatrixTranslator.cropImageView(self)
-            self.image = newImage
+            
+            if let img = self.image {
+                self.image = img.imageWithFixedOrientation()
+            }
+            
+            self.image = CGOpenCVMatrixTranslator.cropImageView(self)
             cropViewHidden = true
             self.setNeedsDisplay()
         }
