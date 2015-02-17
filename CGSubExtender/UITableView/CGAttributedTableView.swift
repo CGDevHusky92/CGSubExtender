@@ -797,7 +797,7 @@ public class CGPickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDeleg
     }
 }
 
-public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewDelegate {
+public class CGDatePickerTableViewCell: CGAttributedTableViewCell {
     
     var picker: UIDatePicker!
     
@@ -828,12 +828,15 @@ public class CGDatePickerTableViewCell: CGAttributedTableViewCell, UIPickerViewD
     }
     
     override func descriptionTextSet() {
-        if let d = descriptionText { picker.setDate(NSDate(string: d), animated: false) }
+        if let d = descriptionText {
+            picker.setDate(NSDate(string: d), animated: false)
+            descriptionLabel.text = NSDate(string: d).prettyDateAndTimeString()
+        }
     }
     
     func checkForAndSaveChanges() {
         if let del = delegate {
-            del.attributedTableViewCell(self, updateDescriptionWithData: picker.date.prettyDateAndTimeString())
+            del.attributedTableViewCell(self, updateDescriptionWithData: picker.date.stringFromDate())
         }
     }
 }

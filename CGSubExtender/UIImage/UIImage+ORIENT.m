@@ -13,13 +13,17 @@ CGFloat RadiansToDegrees(CGFloat radians) { return radians * 180/M_PI;   };
 
 @implementation UIImage (ORIENT)
 
-- (UIImage *)imageWithFixedOrientation
+- (UIImage *)imageWithFixedOrientation:(BOOL)gallery
 {
     UIImage *image = self;
 
     // Chase to the rescue:
     
+    NSLog(@"Image Starts At Size : %@ : Mode - %ld", NSStringFromCGSize(image.size), image.resizingMode);
+    
     CGSize imgSize = [image size];
+    
+    
     UIView *rotatedViewBox = [[UIView alloc] initWithFrame:CGRectMake(0,0,imgSize.height, imgSize.width)];
     CGAffineTransform t = CGAffineTransformMakeRotation(DegreesToRadians(90));
     rotatedViewBox.transform = t;
@@ -32,7 +36,7 @@ CGFloat RadiansToDegrees(CGFloat radians) { return radians * 180/M_PI;   };
 
     // Move the origin to the middle of the image so we will rotate and scale around the center.
     CGContextTranslateCTM(bitmap, rotatedSize.width/2, rotatedSize.height/2);
-
+    
     switch ([image imageOrientation]) {
         case UIImageOrientationUp:
             NSLog(@"Image Orientation Up");
@@ -57,9 +61,19 @@ CGFloat RadiansToDegrees(CGFloat radians) { return radians * 180/M_PI;   };
 
     // Now, draw the rotated/scaled image into the context
     CGContextScaleCTM(bitmap, 1.0, -1.0);
-    CGContextDrawImage(bitmap, CGRectMake(-imgSize.height / 2, -imgSize.width / 2, imgSize.height, imgSize.width), [image CGImage]);
+    
+//    CGContextDrawImage(bitmap, CGRectMake(-rotatedSize.height / 2, -rotatedSize.width / 2, rotatedSize.height, rotatedSize.width), [image CGImage]);
+    
+    if (gallery) {
+        CGContextDrawImage(bitmap, CGRectMake(-imgSize.width / 2, -imgSize.height / 2, imgSize.width, imgSize.height), [image CGImage]);
+    } else {
+        CGContextDrawImage(bitmap, CGRectMake(-imgSize.height / 2, -imgSize.width / 2, imgSize.height, imgSize.width), [image CGImage]);
+    }
+    
     UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
+    
+    NSLog(@"Image Cropped To Size : %@", NSStringFromCGSize(newImage.size));
     
     return newImage;
 }

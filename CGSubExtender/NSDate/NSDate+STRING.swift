@@ -24,6 +24,7 @@ extension NSDate {
         return dateFormatterInstance.instance!
     }
     
+    
     public convenience init(string: String) {
         let dateFormatter = NSDateFormatter()
         dateFormatter.timeZone = NSTimeZone(name: "UTC")
@@ -63,4 +64,10 @@ extension NSDate {
         return dateFormatter.stringFromDate(self)
     }
     
+    public class func year() -> String {
+        let df = NSDateFormatter()
+        df.timeZone = NSTimeZone(name: "UTC")
+        df.dateFormat = "yyyy"
+        return df.stringFromDate(NSDate())
+    }
 }

@@ -32,6 +32,8 @@ public class CGCropImageView: UIImageView {
         }
     }
     
+    public var gallery = false
+    
     var cornersDetected: Bool = false
     
     var maxX: CGFloat = 0.0
@@ -73,7 +75,7 @@ public class CGCropImageView: UIImageView {
             cropView.doneCropping = true
             
             if let img = self.image {
-                self.image = img.imageWithFixedOrientation()
+                self.image = img.imageWithFixedOrientation(gallery)
             }
             
             self.image = CGOpenCVMatrixTranslator.cropImageView(self)

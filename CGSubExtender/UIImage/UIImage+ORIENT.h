@@ -10,7 +10,7 @@
 
 @interface UIImage (ORIENT)
 
-- (UIImage *)imageWithFixedOrientation;
+- (UIImage *)imageWithFixedOrientation:(BOOL)gallery;
 - (UIImage *)crop:(CGRect)rect;
 
 @end
