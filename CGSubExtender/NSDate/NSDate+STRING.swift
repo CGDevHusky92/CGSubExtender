@@ -10,7 +10,7 @@ import Foundation
 
 extension NSDate {
     
-    var dateFormatter: NSDateFormatter {
+    class var dateFormatter: NSDateFormatter {
         struct dateFormatterInstance {
             static var onceToken : dispatch_once_t = 0
             static var instance : NSDateFormatter?
@@ -26,12 +26,8 @@ extension NSDate {
     
     
     public convenience init(string: String) {
-        let dateFormatter = NSDateFormatter()
-        dateFormatter.timeZone = NSTimeZone(name: "UTC")
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
-        
-        let dateTemp = dateFormatter.dateFromString(string)
+        NSDate.dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let dateTemp = NSDate.dateFormatter.dateFromString(string)
         if let date = dateTemp {
             self.init(timeInterval: 0, sinceDate: date)
         } else {
@@ -40,34 +36,32 @@ extension NSDate {
     }
     
     public func stringFromDateWithFormat(format: String) -> String {
-        dateFormatter.dateFormat = format
-        return dateFormatter.stringFromDate(self)
+        NSDate.dateFormatter.dateFormat = format
+        return NSDate.dateFormatter.stringFromDate(self)
     }
     
     public func stringFromDate() -> String {
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        return dateFormatter.stringFromDate(self)
+        NSDate.dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return NSDate.dateFormatter.stringFromDate(self)
     }
     
     public func prettyDateString() -> String {
-        dateFormatter.dateFormat = "dd/MM/yyyy"
-        return dateFormatter.stringFromDate(self)
+        NSDate.dateFormatter.dateFormat = "dd/MM/yyyy"
+        return NSDate.dateFormatter.stringFromDate(self)
     }
     
     public func prettyTimeString() -> String {
-        dateFormatter.dateFormat = "HH:mm"
-        return dateFormatter.stringFromDate(self)
+        NSDate.dateFormatter.dateFormat = "HH:mm"
+        return NSDate.dateFormatter.stringFromDate(self)
     }
     
     public func prettyDateAndTimeString() -> String {
-        dateFormatter.dateFormat = "h:mm a 'on' MM/dd/yyyy"
-        return dateFormatter.stringFromDate(self)
+        NSDate.dateFormatter.dateFormat = "h:mm a 'on' MM/dd/yyyy"
+        return NSDate.dateFormatter.stringFromDate(self)
     }
     
     public class func year() -> String {
-        let df = NSDateFormatter()
-        df.timeZone = NSTimeZone(name: "UTC")
-        df.dateFormat = "yyyy"
-        return df.stringFromDate(NSDate())
+        NSDate.dateFormatter.dateFormat = "yyyy"
+        return NSDate.dateFormatter.stringFromDate(NSDate())
     }
 }
