@@ -60,8 +60,18 @@ extension NSDate {
         return NSDate.dateFormatter.stringFromDate(self)
     }
     
-    public class func year() -> String {
-        NSDate.dateFormatter.dateFormat = "yyyy"
-        return NSDate.dateFormatter.stringFromDate(NSDate())
+    public func minutes() -> Int {
+        let c = NSCalendar.currentCalendar()
+        return c.component(.CalendarUnitMinute, fromDate: self)
+    }
+    
+    public func hour() -> Int {
+        let c = NSCalendar.currentCalendar()
+        return c.component(.CalendarUnitHour, fromDate: self)
+    }
+    
+    public func year() -> Int {
+        let c = NSCalendar.currentCalendar()
+        return c.component(NSCalendarUnit.CalendarUnitYear, fromDate: self)
     }
 }
