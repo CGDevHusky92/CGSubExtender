@@ -23,7 +23,7 @@ protocol CGAutoCompletePopoverDelegate {
 
 public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate {
     
-    var autoController: CGAutoCompleteViewController!
+    var autoController: CGAutoCompleteViewController?
     var autoPopController: UIPopoverController?
     var autoCompleteDictionary: [String]!
     
@@ -44,9 +44,11 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
         if pEnabled && autoCompleteDictionary.count > 0 && UIDevice.currentDevice().userInterfaceIdiom != .Phone {
             self.addTarget(self, action: "displayPopover", forControlEvents: .EditingDidBegin)
             autoController = CGAutoCompleteViewController(selectables: autoCompleteDictionary)
-            autoController.delegate = self
-            autoPopController = UIPopoverController(contentViewController: autoController)
-            if let a = autoPopController { a.popoverContentSize = autoController.view.frame.size }
+            if let auto = autoController {
+                auto.delegate = self
+                autoPopController = UIPopoverController(contentViewController: auto)
+                if let a = autoPopController { a.popoverContentSize = auto.view.frame.size }
+            }
         }
     }
     
@@ -94,7 +96,7 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
                 if let r = range {
                     inputTemp = curMajor.substringWithRange(r) //Since case may change
                     outputTemp = curMajor
-                    autoController.completeAutoSelection(curMajor)
+                    if let a = autoController { a.completeAutoSelection(curMajor) }
                     foundMatch = true
                     break
                 }
