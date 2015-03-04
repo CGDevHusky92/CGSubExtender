@@ -119,7 +119,7 @@ public class CGSegmentedSearchController: UIViewController, UITableViewDataSourc
     public func findHairlineImageViewWithinView(view: UIView) -> UIImageView? {
         if view.isKindOfClass(UIImageView) && view.bounds.size.height <= 1.0 { return view as? UIImageView }
         for subview in view.subviews {
-            let imageTemp = self.findHairlineImageViewWithinView(subview as UIView)
+            let imageTemp = self.findHairlineImageViewWithinView(subview as! UIView)
             if let imageView = imageTemp { return imageView }
         }
         return nil

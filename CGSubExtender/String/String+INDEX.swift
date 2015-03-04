@@ -9,7 +9,7 @@
 import Foundation
 
 extension String {
-    public var length: Int { get { return countElements(self) } }
+    public var length: Int { get { return count(self) } }
     
     public func contains(s: String) -> Bool {
         return (self.rangeOfString(s) != nil) ? true : false
@@ -95,7 +95,7 @@ extension String {
             println(e.description)
         } else {
             if let exp = expTemp {
-                let matches = exp.matchesInString(self, options: nil, range: NSMakeRange(0, self.length)) as [NSTextCheckingResult]
+                let matches = exp.matchesInString(self, options: nil, range: NSMakeRange(0, self.length)) as! [NSTextCheckingResult]
                 return matches
             }
         }
@@ -105,6 +105,7 @@ extension String {
     private var vowels: [String] { get { return ["a", "e", "i", "o", "u"] } }
     private var consonants: [String] { get { return ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "z"] } }
     
+    /*
     public func pluralize(count: Int) -> String {
         if count == 1 {
             return self
@@ -126,5 +127,5 @@ extension String {
             
             return prefix + (lastChar != lastChar.uppercaseString ? suffix : suffix.uppercaseString)
         }
-    }
+    }*/
 }

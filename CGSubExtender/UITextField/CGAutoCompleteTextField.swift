@@ -58,7 +58,7 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
             var error: NSError?
             let csvContentsTemp = NSString(contentsOfFile: filePath, encoding: NSUTF8StringEncoding, error: &error)
             if let csvContents = csvContentsTemp {
-                let fileContents = csvContents.componentsSeparatedByString(",") as [String]
+                let fileContents = csvContents.componentsSeparatedByString(",") as! [String]
                 self.startAutoCompleteWithDictionary(fileContents, withPickerView: pEnabled)
             } else {
                 if let e = error {
@@ -84,7 +84,7 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
         let backspaced = inputTemp.hasPrefix(text)
         inputTemp = text
         
-        if !backspaced && text.utf16Count > 0 {
+        if !backspaced && count(text.utf16) > 0 {
             outputTemp = text
             var foundMatch = false
             
@@ -113,7 +113,7 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
             // If a match was found in the majors list (and the popover is initialized), select that row in the popover
             if foundMatch {
                 if let del = delegate {
-                    let d = del as CGAutoCompleteTextFieldDelegate
+                    let d = del as! CGAutoCompleteTextFieldDelegate
                     d.autoCompleteTextField(self, autoCompleteMatchFoundForTextField: text)
                 }
             }
@@ -138,7 +138,7 @@ public class CGAutoCompleteTextField: UITextField, CGAutoCompletePopoverDelegate
     func returnSelectedString(selected: String) {
         self.currentSelectionInPicker(selected)
         if let delTemp = delegate {
-            let d = delTemp as CGAutoCompleteTextFieldDelegate
+            let d = delTemp as! CGAutoCompleteTextFieldDelegate
             d.autoCompleteTextField(self, dismissingAutoTextFieldWithFinalText: self.text)
         }
 //        self.resignFirstResponder()
@@ -173,7 +173,7 @@ class CGAutoCompleteViewController: UIViewController, UIPickerViewDataSource, UI
         if autoStrings.count > 0 {
             var lIndex = 0
             for (i, s) in enumerate(autoStrings) {
-                if s.utf16Count > autoStrings[lIndex].utf16Count { lIndex = i }
+                if count(s.utf16) > count(autoStrings[lIndex].utf16) { lIndex = i }
             }
             width = self.generateWidthFromAttributesAndText(autoStrings[lIndex]) + (2 * 20.0)
         } else { width = 500.0 }

@@ -103,7 +103,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             valid = cellDescription.valid
         }
         
-        let cell: CGAttributedTableViewCell = tableView.dequeueReusableCellWithIdentifier(type.simpleDescription(), forIndexPath: indexPath) as CGAttributedTableViewCell
+        let cell: CGAttributedTableViewCell = tableView.dequeueReusableCellWithIdentifier(type.simpleDescription(), forIndexPath: indexPath) as! CGAttributedTableViewCell
         cell.delegate = self
         cell.indexPath = indexPath
         cell.keyboardType = type.keyboardType()
@@ -145,7 +145,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
     
     public func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: false)
-        let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
+        let cell: CGAttributedTableViewCell = tableView.cellForRowAtIndexPath(indexPath) as! CGAttributedTableViewCell
         if _singleEditingMode {
             if cell.editMode {
                 selectedCell = nil
@@ -210,7 +210,7 @@ public class CGAttributedTableView: UITableView, UITableViewDataSource, UITableV
             
             if progress {
                 let indexPath = NSIndexPath(forRow: newRow, inSection: newSection)
-                let cell = self.cellForRowAtIndexPath(indexPath) as CGAttributedTableViewCell
+                let cell = self.cellForRowAtIndexPath(indexPath) as! CGAttributedTableViewCell
                 if let rId = cell.reuseIdentifier {
                     let cellTypeTemp = CGAttributedTableViewCellType(rawValue: CGAttributedTableViewCellType.valueFromDescription(rId))
                     if let cellType = cellTypeTemp {

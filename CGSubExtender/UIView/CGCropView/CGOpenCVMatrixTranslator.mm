@@ -37,10 +37,10 @@
                                              ((UIView*)[handles objectAtIndex:6]).frame.origin.y / scaleY + handleSize);
     
     // Determine the width/height for each side
-    CGFloat widthTop    = abs(bottomRightPoint.x - bottomLeftPoint.x);
-    CGFloat widthBottom = abs(topRightPoint.x - topLeftPoint.x);
-    CGFloat heightRight = abs(topRightPoint.y - bottomRightPoint.y);
-    CGFloat heightLeft  = abs(topLeftPoint.y - bottomLeftPoint.y);
+    CGFloat widthTop    = std::abs(bottomRightPoint.x - bottomLeftPoint.x);
+    CGFloat widthBottom = std::abs(topRightPoint.x - topLeftPoint.x);
+    CGFloat heightRight = std::abs(topRightPoint.y - bottomRightPoint.y);
+    CGFloat heightLeft  = std::abs(topLeftPoint.y - bottomLeftPoint.y);
     
     // Determine the maximum width/height of the image
     CGFloat maxWidth    = (widthTop > widthBottom) ? widthTop : widthBottom;

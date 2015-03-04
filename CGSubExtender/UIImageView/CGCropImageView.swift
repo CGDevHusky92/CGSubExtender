@@ -84,9 +84,9 @@ public class CGCropImageView: UIImageView {
         }
     }
     
-    public override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
+    public override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         // Get touch info
-        let touch: UITouch = touches.anyObject() as UITouch
+        let touch: UITouch = touches.first as! UITouch
         let touchPoint = touch.locationInView(cropView)
         
         // Check for touch in all handles
@@ -109,10 +109,10 @@ public class CGCropImageView: UIImageView {
         }
     }
     
-    public override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
+    public override func touchesMoved(touches: Set<NSObject>, withEvent event: UIEvent) {
         if let grabHandle = cropView.grabbedHandle {
             // Get touch info
-            let touch: UITouch = touches.anyObject() as UITouch
+            let touch: UITouch = touches.first as! UITouch
             let touchPoint: CGPoint = touch.locationInView(cropView)
             let lastPoint: CGPoint  = touch.previousLocationInView(cropView)
             
@@ -140,10 +140,9 @@ public class CGCropImageView: UIImageView {
             // Tell the view to redraw
             cropView.setNeedsDisplay()
         }
-        
     }
     
-    public override func touchesEnded(touches: NSSet, withEvent event: UIEvent) {
+    public override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
         // Reset the grabbed handle
         if let grabHandle = cropView.grabbedHandle {
             grabHandle.alpha = cropView.handleAlphaBase
