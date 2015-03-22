@@ -163,7 +163,7 @@ class CGAutoCompleteViewController: UIViewController, UIPickerViewDataSource, UI
     }
     
     init(selectables: [String]) {
-        super.init()
+        super.init(nibName: nil, bundle: nil)
         autoStrings = selectables
     }
     
